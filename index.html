@@ -154,7 +154,7 @@
   <script>
     // 1. Firebase Firestore配置 -- 替换为你自己的firebaseConfig
     const firebaseConfig = {
-      apiKey: "AIzaSyCcsz9Lg3KmgvD_SXUdy4V5x7aCQtSdI-s",
+       apiKey: "AIzaSyCcsz9Lg3KmgvD_SXUdy4V5x7aCQtSdI-s",
   authDomain: "webs-d0804.firebaseapp.com",
   databaseURL: "https://webs-d0804-default-rtdb.firebaseio.com",
   projectId: "webs-d0804",
@@ -381,7 +381,7 @@
           uid: uid,
           title: title,
           nodes: JSON.parse(JSON.stringify(nodes)),
-          time: new Date().toISOString()
+          time: firebase.firestore.FieldValue.serverTimestamp()
         })
         .then(() => {
           alert("已保存到云端！");
@@ -413,8 +413,12 @@
         return;
       }
       const uid = auth.currentUser.uid;
-      db.collection('mindmaps').where('uid','==',uid).orderBy('time','desc').limit(30)
-        .get().then(snapshot=>{
+      db.collection('mindmaps')
+        .where('uid', '==', uid)
+        .orderBy('time', 'desc')
+        .limit(30)
+        .get()
+        .then(snapshot=>{
           thumbList.innerHTML = '';
           if(snapshot.empty) {
             thumbList.innerHTML = `<div style="color:#bbb;font-size:12px;margin:18px 0;text-align:center;">暂无线上导图</div>`;
