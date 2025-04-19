@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>思维导图（Firebase后端版）</title>
+  <title>思维导图（Firestore+Google登录）</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
@@ -11,98 +11,93 @@
   <style>
     body { margin:0; background:#f5f6fa; font-family: Arial,'微软雅黑'; }
     #toolbar {
-      width: 100vw; height: 72px; background: #8066e1; color: #fff; display: flex; align-items: center;
+      width: 100vw; height: 60px; background: #8066e1; color: #fff; display: flex; align-items: center;
       box-sizing: border-box; padding: 0 32px; position:relative; z-index:2;
     }
-    #toolbar .logo { font-size: 28px; font-weight: bold; border-radius: 50%; width:40px; height:40px; background:#fff; color:#8066e1; display:inline-flex; align-items:center; justify-content:center; margin-right:14px;}
-    #toolbar .title { font-size: 24px; font-weight: bold; margin-right: 32px;}
-    #toolbar .btn { margin-left:12px; background: #fff; color: #8066e1; border: none; border-radius: 8px; padding: 7px 22px; font-size: 16px; cursor:pointer; font-weight:500; transition:.2s; display:inline-flex; align-items:center;}
+    #toolbar .logo { font-size: 25px; font-weight: bold; border-radius: 50%; width:32px; height:32px; background:#fff; color:#8066e1; display:inline-flex; align-items:center; justify-content:center; margin-right:14px;}
+    #toolbar .title { font-size: 21px; font-weight: bold; margin-right: 32px;}
+    #toolbar .btn { margin-left:12px; background: #fff; color: #8066e1; border: none; border-radius: 8px; padding: 6px 19px; font-size: 15px; cursor:pointer; font-weight:500; transition:.2s; display:inline-flex; align-items:center;}
     #toolbar .btn:hover { background: #e9e4fc;}
-    #toolbar .btn.add { background: #f5f6fa; color: #8066e1; border: 1.5px solid #8066e1;}
+    #toolbar .btn.add { background: #f5f6fa; color: #8066e1; border: 1.4px solid #8066e1;}
     #toolbar .btn.add:hover { background: #e9e4fc; }
-    #toolbar .user-info {
-      margin-left:auto; display:flex; align-items:center; gap:8px; font-size:15px;
-    }
-    #toolbar .avatar { width:30px; height:30px; border-radius:50%; background:#eee; object-fit:cover; }
-    #mindmap-container { position:relative; width:100vw; height:calc(100vh - 72px); overflow:hidden; background: #f9f9fc; }
-    #mindmap { width:100vw; height:calc(100vh - 72px); position:relative; overflow:hidden; }
+    #toolbar .user-info { margin-left:auto; display:flex; align-items:center; gap:8px; font-size:14px;}
+    #toolbar .avatar { width:26px; height:26px; border-radius:50%; background:#eee; object-fit:cover; }
+    #mindmap-container { position:relative; width:100vw; height:calc(100vh - 60px); overflow:hidden; background: #f9f9fc; }
+    #mindmap { width:100vw; height:calc(100vh - 60px); position:relative; overflow:hidden; }
     .node {
-      position:absolute; min-width:90px; min-height:38px; padding:9px 16px 9px 20px;
-      background:#fff; border-radius:16px; color:#333; font-weight:400;
-      user-select:none; cursor:pointer; box-shadow:0 4px 12px #c7bbfa44;
-      text-align:left; font-size:18px; border:2.2px solid #bfbefc;
-      transition:.2s;
-      z-index: 2;
-      display: flex; align-items: center; justify-content: flex-start; gap:0;
+      position:absolute; min-width:65px; min-height:28px; padding:4px 13px 4px 18px;
+      background:#fff; border-radius:12px; color:#333; font-weight:400;
+      user-select:none; cursor:pointer; box-shadow:0 2px 9px #c7bbfa33;
+      font-size:13px; border:1.7px solid #bfbefc; transition:.2s;
+      z-index: 2; display: flex; align-items: center; flex-direction: row; gap:0;
+      white-space:nowrap;
     }
-    .node.selected { border:2.2px solid #8066e1; }
+    .node.selected { border:1.7px solid #8066e1; }
     .node.root { background: #ffe08b; border-color: #f4c24d; color:#564200; font-weight: bold;}
     .node input {
       font-size: inherit; font-family: inherit; border:none; border-radius: 8px; background:#fffde6; outline:2px solid #8066e1; color:#333;
-      padding: 3px 8px; width: 90px;
+      padding: 2px 8px; width: 70px;
     }
     .add-child-btn {
-      margin-left:10px;
+      position: absolute;
+      left: 50%; top: -21px; transform: translateX(-50%);
       background: #efe8fd; color:#8066e1;
-      border: none; border-radius: 50%; width: 26px; height: 26px;
+      border: none; border-radius: 50%; width: 18px; height: 18px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 19px; font-weight:bold; cursor:pointer; box-shadow:0 2px 8px #c7bbfa55;
-      opacity: 0; pointer-events:none; transform: scale(0.8) translateY(4px);
-      transition: opacity .2s, transform .2s;
+      font-size: 13px; font-weight:bold; cursor:pointer; box-shadow:0 1px 4px #c7bbfa33;
+      opacity: 0; pointer-events:none; transition: opacity .2s, transform .2s;
+      z-index: 3;
     }
     .node:hover .add-child-btn, .add-child-btn:focus, .add-child-btn:active {
-      opacity:1 !important; pointer-events:all !important; transform: scale(1) translateY(0);
+      opacity:1 !important; pointer-events:all !important; transform: translateX(-50%) scale(1.08);
     }
     .add-child-btn:hover { background: #e3dafc; }
     .del-btn {
       border:none; background: #eee; color:#888; border-radius:50%;
-      width:24px; height:24px; font-size:15px; font-weight:bold; cursor:pointer;
+      width:18px; height:18px; font-size:12px; font-weight:bold; cursor:pointer;
       display: inline-flex; align-items:center; justify-content:center;
       margin-left:4px; box-shadow:0 2px 8px #0001; transition: background .2s;
     }
     .del-btn:hover { background:#ffcdd2; color:#b71c1c; }
     .line { position:absolute; z-index:1; pointer-events:none; }
     #sidebar {
-      position:fixed; top:72px; right:0; width:270px; height:calc(100vh - 72px);
+      position:fixed; top:60px; right:0; width:250px; height:calc(100vh - 60px);
       background:#fff; box-shadow: -2px 0 16px #b7aefa33; z-index:10;
-      display:none; flex-direction:column; padding:18px 0 0 0; overflow-y:auto;
+      display:none; flex-direction:column; padding:15px 0 0 0; overflow-y:auto;
     }
-    #sidebar h3 {
-      font-size:17px; margin:0 0 10px 25px; color:#8066e1;
-    }
-    .thumb-list { width:100%; display:flex; flex-direction:column; gap:18px; padding:0 16px 16px 16px;}
+    #sidebar h3 { font-size:15px; margin:0 0 7px 21px; color:#8066e1;}
+    .thumb-list { width:100%; display:flex; flex-direction:column; gap:13px; padding:0 12px 10px 12px;}
     .thumb-item {
-      background: #f8f8fd; border-radius:10px; box-shadow:0 2px 9px #ddd5fa33; padding:14px 11px 8px 11px;
-      margin-bottom: 3px; cursor:pointer; border:2px solid transparent; transition:.15s;
-      display:flex; flex-direction:column; align-items:center;
+      background: #f8f8fd; border-radius:8px; box-shadow:0 1px 4px #ddd5fa33; padding:10px 8px 7px 8px;
+      margin-bottom: 2px; cursor:pointer; border:1.5px solid transparent; transition:.15s;
+      display:flex; flex-direction:column; align-items:center; font-size:12px;
     }
     .thumb-item.selected, .thumb-item:hover { border-color:#8066e1; background:#f1edfa;}
     .thumb-title {
-      font-size:15px; color:#8066e1; margin-bottom:7px; font-weight:bold;
-      text-align:center; width: 100%;
-      word-break:break-all;
+      font-size:12px; color:#8066e1; margin-bottom:4px; font-weight:bold;
+      text-align:center; width: 100%; word-break:break-all;
     }
     .thumb-svg {
-      background:#fff; border-radius:5px; margin-bottom:5px; box-shadow:0 1px 4px #ddd4ff44;
-      width:190px; height:62px; display:block;
+      background:#fff; border-radius:5px; margin-bottom:2px; box-shadow:0 1px 3px #ddd4ff22;
+      width:130px; height:38px; display:block;
     }
     .shortcutbar {
       position:fixed;
-      left:50%; bottom:23px; transform:translateX(-50%);
-      background: #444; color: #fff; font-size:15px; border-radius:7px; padding:7px 28px; opacity:.98;
-      display:flex; gap:9px; z-index: 21;
+      left:50%; bottom:16px; transform:translateX(-50%);
+      background: #444; color: #fff; font-size:13px; border-radius:7px; padding:5px 16px; opacity:.99;
+      display:flex; gap:7px; z-index: 21;
     }
     .shortcutbar kbd {
-      background:#222; color:#ffe08b; border-radius:4px; padding:2px 7px; margin-right:3px; font-family:monospace; font-size:14px;
+      background:#222; color:#ffe08b; border-radius:4px; padding:1px 6px; margin-right:2px; font-family:monospace; font-size:12px;
     }
     .mindmap-fab-wrap {
-      position:fixed; right:23px; bottom:26px; z-index:10; display:flex; flex-direction:column; gap:15px;
+      position:fixed; right:17px; bottom:18px; z-index:10; display:flex; flex-direction:column; gap:10px;
     }
     .mindmap-fab {
-      width:42px; height:42px; border-radius:50%; background:#fff; color:#8066e1;
-      display:flex; align-items:center; justify-content:center; font-size:25px; box-shadow:0 2px 12px #c7bbfa55;
+      width:33px; height:33px; border-radius:50%; background:#fff; color:#8066e1;
+      display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 1px 7px #c7bbfa44;
       cursor:pointer; border:none; transition:.15s;
-      border:1.5px solid #ece6fd;
+      border:1.2px solid #ece6fd;
     }
     .mindmap-fab:hover { background:#ede7fb; }
     #overlay {
@@ -110,12 +105,12 @@
       align-items: center; justify-content: center;
     }
     #dialog {
-      background: #fff; border-radius: 10px; box-shadow: 0 4px 32px #0005; padding: 32px 35px;
-      min-width: 320px; font-size: 18px; color: #444; text-align:center;
+      background: #fff; border-radius: 10px; box-shadow: 0 3px 20px #0004; padding: 21px 21px;
+      min-width: 230px; font-size: 14px; color: #444; text-align:center;
     }
     #dialog .dialog-btn {
-      margin: 24px 10px 0 10px; background: #8066e1; color: #fff; border: none; border-radius: 7px; padding: 8px 22px;
-      font-size: 16px; cursor:pointer; font-weight:500; transition:.2s;
+      margin: 15px 8px 0 8px; background: #8066e1; color: #fff; border: none; border-radius: 6px; padding: 6px 16px;
+      font-size: 13px; cursor:pointer; font-weight:500; transition:.2s;
     }
     #dialog .dialog-btn:hover { background: #5945b6;}
   </style>
@@ -126,7 +121,7 @@
     <span class="title">思维导图</span>
     <button class="btn add" id="btn-addroot" onclick="addRoot()">+ 添加中心主题</button>
     <button class="btn" onclick="onNewMap()">⟳ 新建</button>
-    <button class="btn" onclick="saveMap()">💾 保存</button>
+    <button class="btn" onclick="saveCloud()">☁️ 线上保存</button>
     <button class="btn" onclick="showSidebar()">📁 加载</button>
     <div class="user-info" id="user-info">
       <button class="btn" id="login-btn" onclick="googleLogin()">Google登录</button>
@@ -135,7 +130,7 @@
   <div id="mindmap-container">
     <div id="mindmap"></div>
     <div id="sidebar">
-      <h3>我的导图</h3>
+      <h3>我的线上导图</h3>
       <div class="thumb-list" id="thumb-list"></div>
     </div>
     <div id="overlay">
@@ -153,25 +148,22 @@
   <div class="shortcutbar">
     <kbd>Enter</kbd> 添加节点
     <kbd>Backspace</kbd> 删除节点
-    <span>双击</span> 编辑节点
+    <kbd>Space</kbd> 编辑节点
+    <span>双击节点也可编辑</span>
   </div>
   <script>
-    // ====== 1. 替换为你的firebaseConfig ======
+    // Firestore配置 -- 替换为你自己的firebaseConfig
     const firebaseConfig = {
-      apiKey: "AIzaSyCcsz9Lg3KmgvD_SXUdy4V5x7aCQtSdI-s",
-  authDomain: "webs-d0804.firebaseapp.com",
-  databaseURL: "https://webs-d0804-default-rtdb.firebaseio.com",
-  projectId: "webs-d0804",
-  storageBucket: "webs-d0804.firebasestorage.app",
-  messagingSenderId: "195195304680",
-  appId: "1:195195304680:web:01c68159689678c7f4275d",
-  measurementId: "G-RRQ7RFHV76"
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID"
+      // ...
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // ========== 2. 登录&用户信息 ==========
+    // Google登录
     let currentUser = null;
     function googleLogin() {
       const provider = new firebase.auth.GoogleAuthProvider();
@@ -207,7 +199,7 @@
       loadSidebarIfVisible();
     });
 
-    // ========== 3. 思维导图功能 ==========
+    // 思维导图功能
     let nodes = [];
     let idCounter = 1;
     let selectedId = null;
@@ -233,34 +225,12 @@
         div.className = 'node' + (selectedId===n.id?' selected':'') + (n.id===1?' root':'');
         div.style.left = n.x+'px';
         div.style.top = n.y+'px';
+        div.style.position = "absolute";
+        div.style.fontSize = "13px";
+        div.style.whiteSpace = "nowrap";
+        div.style.flexDirection = "row";
 
-        // 内容
-        if(editingNodeId === n.id) {
-          let input = document.createElement('input');
-          input.value = n.text;
-          input.onblur = function() { finishEdit(n, input.value); };
-          input.onkeydown = function(e) {
-            if(e.key === "Enter") input.blur();
-            else if(e.key === "Escape") { editingNodeId = null; render(); }
-          };
-          setTimeout(()=>{ input.focus(); input.select(); }, 0);
-          div.appendChild(input);
-        } else {
-          let btn = document.createElement('button');
-          btn.style = "all:unset;cursor:pointer;display:inline-block;width:auto;font:inherit;background:none;";
-          btn.textContent = n.text;
-          btn.ondblclick = function(e){
-            e.stopPropagation();
-            editingNodeId = n.id;
-            render();
-          };
-          btn.onclick = function(e){
-            e.stopPropagation(); selectedId = n.id; render();
-          };
-          div.appendChild(btn);
-        }
-
-        // 加号按钮
+        // 加号按钮上方
         let plusBtn = document.createElement('button');
         plusBtn.className = 'add-child-btn';
         plusBtn.textContent = "+";
@@ -270,6 +240,20 @@
           addNode(n.id);
         };
         div.appendChild(plusBtn);
+
+        // 内容文本行
+        let btn = document.createElement('button');
+        btn.style = "all:unset;cursor:pointer;display:inline-block;width:auto;font:inherit;background:none;white-space:nowrap;";
+        btn.textContent = n.text;
+        btn.ondblclick = function(e){
+          e.stopPropagation();
+          editingNodeId = n.id;
+          render();
+        };
+        btn.onclick = function(e){
+          e.stopPropagation(); selectedId = n.id; render();
+        };
+        div.appendChild(btn);
 
         // 删除按钮
         if(n.id !== 1) {
@@ -282,6 +266,19 @@
             deleteNode(n.id);
           };
           div.appendChild(delBtn);
+        }
+
+        // 编辑输入框
+        if(editingNodeId === n.id) {
+          let input = document.createElement('input');
+          input.value = n.text;
+          input.onblur = function() { finishEdit(n, input.value); };
+          input.onkeydown = function(e) {
+            if(e.key === "Enter") input.blur();
+            else if(e.key === "Escape") { editingNodeId = null; render(); }
+          };
+          setTimeout(()=>{ input.focus(); input.select(); }, 0);
+          div.appendChild(input);
         }
 
         // 拖动
@@ -310,22 +307,22 @@
     }
 
     function drawLine(from, to, color="#bfbefc"){
-      let x1 = from.x + 90, y1 = from.y + 25;
-      let x2 = to.x + 20, y2 = to.y + 25;
+      let x1 = from.x + 65, y1 = from.y + 17;
+      let x2 = to.x + 15, y2 = to.y + 17;
       let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.classList.add('line');
-      svg.style.left = Math.min(x1,x2)-30+"px";
-      svg.style.top = Math.min(y1,y2)-30+"px";
-      svg.style.width = Math.abs(x2-x1)+60+"px";
-      svg.style.height = Math.abs(y2-y1)+60+"px";
-      svg.innerHTML = `<path d="M ${x1-Math.min(x1,x2)+30} ${y1-Math.min(y1,y2)+30} Q ${(x1-Math.min(x1,x2)+x2-Math.min(x1,x2))/2+30} ${(y1-Math.min(y1,y2)+y2-Math.min(y1,y2))/2+30-30}, ${x2-Math.min(x1,x2)+30} ${y2-Math.min(y1,y2)+30}"
-        stroke="${color}" stroke-width="3" fill="none" />`;
+      svg.style.left = Math.min(x1,x2)-25+"px";
+      svg.style.top = Math.min(y1,y2)-25+"px";
+      svg.style.width = Math.abs(x2-x1)+50+"px";
+      svg.style.height = Math.abs(y2-y1)+50+"px";
+      svg.innerHTML = `<path d="M ${x1-Math.min(x1,x2)+25} ${y1-Math.min(y1,y2)+25} Q ${(x1-Math.min(x1,x2)+x2-Math.min(x1,x2))/2+25} ${(y1-Math.min(y1,y2)+y2-Math.min(y1,y2))/2+25-18}, ${x2-Math.min(x1,x2)+25} ${y2-Math.min(y1,y2)+25}"
+        stroke="${color}" stroke-width="2.2" fill="none" />`;
       mindmap.appendChild(svg);
     }
 
     function addRoot() {
       if(nodes.length>0) { alert("只能有一个中心主题"); return; }
-      nodes.push({id:1, text:"中心主题", x:600, y:320, parent:null});
+      nodes.push({id:1, text:"中心主题", x:520, y:220, parent:null});
       idCounter=2; selectedId=1; editingNodeId=1;
       render();
     }
@@ -335,7 +332,7 @@
       let children = nodes.filter(n=>n.parent===parentId);
       let baseAngle = Math.PI/2, dAng = Math.PI/3, idx = children.length;
       let angle = baseAngle + (idx - (children.length-1)/2) * dAng;
-      let radius = 180;
+      let radius = 120;
       let newX = p.x + radius * Math.cos(angle);
       let newY = p.y + radius * Math.sin(angle);
       let newId = idCounter++;
@@ -362,16 +359,16 @@
     function zoomIn(){ scale *= 1.15; render();}
     function zoomOut(){ scale /= 1.15; render();}
 
-    // 快捷键
     document.addEventListener("keydown",function(e){
       if(document.activeElement.tagName==="INPUT") return;
       if(e.key==="Enter" && selectedId!==null){ addNode(selectedId); }
       else if(e.key==="Backspace" && selectedId && selectedId!==1){ deleteNode(selectedId); }
+      else if(e.key===" " && selectedId){ editingNodeId = selectedId; render(); }
     });
 
-    // ========== 4. 云端保存与加载 ==========
-    function saveMap(){
-      if (!auth.currentUser) return alert('请先登录再保存');
+    // ========== 线上保存 ==========
+    function saveCloud(){
+      if (!auth.currentUser) return alert('请先登录再保存到云端');
       if(!nodes.length) return alert("当前画布为空。");
       let title = nodes.find(n=>n.id===1)?.text || "思维导图";
       const uid = auth.currentUser.uid;
@@ -393,7 +390,7 @@
       if(sidebar.style.display==='flex') renderSidebar();
     }
 
-    // 侧边栏
+    // ========== 线上加载 ==========
     function showSidebar(){
       renderSidebar();
       sidebar.style.display="flex";
@@ -408,15 +405,15 @@
     }
     function renderSidebar(){
       if(!auth.currentUser) {
-        thumbList.innerHTML = `<div style="color:#bbb;font-size:15px;margin:25px 0;text-align:center;">请先登录</div>`;
+        thumbList.innerHTML = `<div style="color:#bbb;font-size:12px;margin:18px 0;text-align:center;">请先登录</div>`;
         return;
       }
       const uid = auth.currentUser.uid;
-      db.collection('mindmaps').where('uid','==',uid).orderBy('time','desc')
+      db.collection('mindmaps').where('uid','==',uid).orderBy('time','desc').limit(30)
         .get().then(snapshot=>{
           thumbList.innerHTML = '';
           if(snapshot.empty) {
-            thumbList.innerHTML = `<div style="color:#bbb;font-size:15px;margin:25px 0;text-align:center;">暂无历史导图</div>`;
+            thumbList.innerHTML = `<div style="color:#bbb;font-size:12px;margin:18px 0;text-align:center;">暂无线上导图</div>`;
             return;
           }
           snapshot.forEach(doc=>{
@@ -437,7 +434,7 @@
             div.appendChild(title);
             let svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
             svg.setAttribute("class","thumb-svg");
-            svg.setAttribute("width","190"); svg.setAttribute("height","62");
+            svg.setAttribute("width","130"); svg.setAttribute("height","38");
             renderThumbSvg(svg, item.nodes);
             div.appendChild(svg);
             thumbList.appendChild(div);
@@ -448,39 +445,39 @@
       let ns = nodes0.map(n=>({...n}));
       let minX = Math.min(...ns.map(n=>n.x)), maxX = Math.max(...ns.map(n=>n.x));
       let minY = Math.min(...ns.map(n=>n.y)), maxY = Math.max(...ns.map(n=>n.y));
-      let sx = 170/Math.max(120,maxX-minX+1), sy=40/Math.max(30,maxY-minY+1);
-      let tx = (190 - (maxX-minX)*sx)/2 - minX*sx + 10;
-      let ty = (62 - (maxY-minY)*sy)/2 - minY*sy + 2;
+      let sx = 110/Math.max(60,maxX-minX+1), sy=22/Math.max(16,maxY-minY+1);
+      let tx = (130 - (maxX-minX)*sx)/2 - minX*sx + 6;
+      let ty = (38 - (maxY-minY)*sy)/2 - minY*sy + 2;
       svg.innerHTML = '';
       ns.forEach(n=>{
         if(n.parent!==null && n.parent!==undefined){
           let p = ns.find(nn=>nn.id===n.parent);
           if(p){
-            let x1 = p.x*sx+tx+40, y1 = p.y*sy+ty+15;
-            let x2 = n.x*sx+tx+15, y2 = n.y*sy+ty+15;
+            let x1 = p.x*sx+tx+23, y1 = p.y*sy+ty+8;
+            let x2 = n.x*sx+tx+8, y2 = n.y*sy+ty+8;
             let c = p.id===1?"#f4c24d":"#bfbefc";
             let path = document.createElementNS("http://www.w3.org/2000/svg","path");
-            path.setAttribute("d",`M${x1},${y1} Q${(x1+x2)/2},${(y1+y2)/2-12},${x2},${y2}`);
-            path.setAttribute("stroke",c); path.setAttribute("stroke-width","2.3"); path.setAttribute("fill","none");
+            path.setAttribute("d",`M${x1},${y1} Q${(x1+x2)/2},${(y1+y2)/2-7},${x2},${y2}`);
+            path.setAttribute("stroke",c); path.setAttribute("stroke-width","1.3"); path.setAttribute("fill","none");
             svg.appendChild(path);
           }
         }
       });
       ns.forEach(n=>{
-        let x = n.x*sx+tx+(n.id===1?40:15), y = n.y*sy+ty+15;
-        let r = n.id===1?15:10;
+        let x = n.x*sx+tx+(n.id===1?23:8), y = n.y*sy+ty+8;
+        let r = n.id===1?8:5;
         let circ = document.createElementNS("http://www.w3.org/2000/svg","circle");
         circ.setAttribute("cx",x); circ.setAttribute("cy",y); circ.setAttribute("r",r);
         circ.setAttribute("fill",n.id===1?"#ffe08b":"#fff");
         circ.setAttribute("stroke",n.id===1?"#f4c24d":"#bfbefc");
-        circ.setAttribute("stroke-width",n.id===1?"2.5":"2");
+        circ.setAttribute("stroke-width",n.id===1?"1.2":"1");
         svg.appendChild(circ);
       });
     }
 
     function onNewMap() {
       if(nodes.length>0){
-        showDialog("是否保存当前画布？", ()=>{saveMap(); newMap();});
+        showDialog("是否保存当前画布？", ()=>{saveCloud(); newMap();});
       } else {
         newMap();
       }
