@@ -152,7 +152,7 @@
     <span>双击节点也可编辑</span>
   </div>
   <script>
-    // Firestore配置 -- 替换为你自己的firebaseConfig
+    // 1. Firebase Firestore配置 -- 替换为你自己的firebaseConfig
     const firebaseConfig = {
       apiKey: "AIzaSyCcsz9Lg3KmgvD_SXUdy4V5x7aCQtSdI-s",
   authDomain: "webs-d0804.firebaseapp.com",
@@ -378,8 +378,8 @@
       const uid = auth.currentUser.uid;
       db.collection('mindmaps')
         .add({
-          uid,
-          title,
+          uid: uid,
+          title: title,
           nodes: JSON.parse(JSON.stringify(nodes)),
           time: new Date().toISOString()
         })
