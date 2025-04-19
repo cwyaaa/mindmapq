@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>思维导图（Firebase后端版）</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+  <style>
+    body { margin:0; background:#f5f6fa; font-family: Arial,'微软雅黑'; }
+    #toolbar {
+      width: 100vw; height: 72px; background: #8066e1; color: #fff; display: flex; align-items: center;
+      box-sizing: border-box; padding: 0 32px; position:relative; z-index:2;
+    }
+    #toolbar .logo { font-size: 28px; font-weight: bold; border-radius: 50%; width:40px; height:40px; background:#fff; color:#8066e1; display:inline-flex; align-items:center; justify-content:center; margin-right:14px;}
+    #toolbar .title { font-size: 24px; font-weight: bold; margin-right: 32px;}
+    #toolbar .btn { margin-left:12px; background: #fff; color: #8066e1; border: none; border-radius: 8px; padding: 7px 22px; font-size: 16px; cursor:pointer; font-weight:500; transition:.2s; display:inline-flex; align-items:center;}
+    #toolbar .btn:hover { background: #e9e4fc;}
+    #toolbar .btn.add { background: #f5f6fa; color: #8066e1; border: 1.5px solid #8066e1;}
+    #toolbar .btn.add:hover { background: #e9e4fc; }
+    #toolbar .user-info {
+      margin-left:auto; display:flex; align-items:center; gap:8px; font-size:15px;
+    }
+    #toolbar .avatar { width:30px; height:30px; border-radius:50%; background:#eee; object-fit:cover; }
+    #mindmap-container { position:relative; width:100vw; height:calc(100vh - 72px); overflow:hidden; background: #f9f9fc; }
+    #mindmap { width:100vw; height:calc(100vh - 72px); position:relative; overflow:hidden; }
+    .node {
+      position:absolute; min-width:90px; min-height:38px; padding:9px 16px 9px 20px;
+      background:#fff; border-radius:16px; color:#333; font-weight:400;
+      user-select:none; cursor:pointer; box-shadow:0 4px 12px #c7bbfa44;
+      text-align:left; font-size:18px; border:2.2px solid #bfbefc;
+      transition:.2s;
+      z-index: 2;
+      display: flex; align-items: center; justify-content: flex-start; gap:0;
+    }
+    .node.selected { border:2.2px solid #8066e1; }
+    .node.root { background: #ffe08b; border-color: #f4c24d; color:#564200; font-weight: bold;}
+    .node input {
+      font-size: inherit; font-family: inherit; border:none; border-radius: 8px; background:#fffde6; outline:2px solid #8066e1; color:#333;
+      padding: 3px 8px; width: 90px;
+    }
+    .add-child-btn {
+      margin-left:10px;
+      background: #efe8fd; color:#8066e1;
+      border: none; border-radius: 50%; width: 26px; height: 26px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 19px; font-weight:bold; cursor:pointer; box-shadow:0 2px 8px #c7bbfa55;
+      opacity: 0; pointer-events:none; transform: scale(0.8) translateY(4px);
+      transition: opacity .2s, transform .2s;
+    }
+    .node:hover .add-child-btn, .add-child-btn:focus, .add-child-btn:active {
+      opacity:1 !important; pointer-events:all !important; transform: scale(1) translateY(0);
+    }
+    .add-child-btn:hover { background: #e3dafc; }
+    .del-btn {
+      border:none; background: #eee; color:#888; border-radius:50%;
+      width:24px; height:24px; font-size:15px; font-weight:bold; cursor:pointer;
+      display: inline-flex; align-items:center; justify-content:center;
+      margin-left:4px; box-shadow:0 2px 8px #0001; transition: background .2s;
+    }
+    .del-btn:hover { background:#ffcdd2; color:#b71c1c; }
+    .line { position:absolute; z-index:1; pointer-events:none; }
+    #sidebar {
+      position:fixed; top:72px; right:0; width:270px; height:calc(100vh - 72px);
+      background:#fff; box-shadow: -2px 0 16px #b7aefa33; z-index:10;
+      display:none; flex-direction:column; padding:18px 0 0 0; overflow-y:auto;
+    }
+    #sidebar h3 {
+      font-size:17px; margin:0 0 10px 25px; color:#8066e1;
+    }
+    .thumb-list { width:100%; display:flex; flex-direction:column; gap:18px; padding:0 16px 16px 16px;}
+    .thumb-item {
+      background: #f8f8fd; border-radius:10px; box-shadow:0 2px 9px #ddd5fa33; padding:14px 11px 8px 11px;
+      margin-bottom: 3px; cursor:pointer; border:2px solid transparent; transition:.15s;
+      display:flex; flex-direction:column; align-items:center;
+    }
+    .thumb-item.selected, .thumb-item:hover { border-color:#8066e1; background:#f1edfa;}
+    .thumb-title {
+      font-size:15px; color:#8066e1; margin-bottom:7px; font-weight:bold;
+      text-align:center; width: 100%;
+      word-break:break-all;
+    }
+    .thumb-svg {
+      background:#fff; border-radius:5px; margin-bottom:5px; box-shadow:0 1px 4px #ddd4ff44;
+      width:190px; height:62px; display:block;
+    }
+    .shortcutbar {
+      position:fixed;
+      left:50%; bottom:23px; transform:translateX(-50%);
+      background: #444; color: #fff; font-size:15px; border-radius:7px; padding:7px 28px; opacity:.98;
+      display:flex; gap:9px; z-index: 21;
+    }
+    .shortcutbar kbd {
+      background:#222; color:#ffe08b; border-radius:4px; padding:2px 7px; margin-right:3px; font-family:monospace; font-size:14px;
+    }
+    .mindmap-fab-wrap {
+      position:fixed; right:23px; bottom:26px; z-index:10; display:flex; flex-direction:column; gap:15px;
+    }
+    .mindmap-fab {
+      width:42px; height:42px; border-radius:50%; background:#fff; color:#8066e1;
+      display:flex; align-items:center; justify-content:center; font-size:25px; box-shadow:0 2px 12px #c7bbfa55;
+      cursor:pointer; border:none; transition:.15s;
+      border:1.5px solid #ece6fd;
+    }
+    .mindmap-fab:hover { background:#ede7fb; }
+    #overlay {
+      position: fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.22); display:none; z-index:100;
+      align-items: center; justify-content: center;
+    }
+    #dialog {
+      background: #fff; border-radius: 10px; box-shadow: 0 4px 32px #0005; padding: 32px 35px;
+      min-width: 320px; font-size: 18px; color: #444; text-align:center;
+    }
+    #dialog .dialog-btn {
+      margin: 24px 10px 0 10px; background: #8066e1; color: #fff; border: none; border-radius: 7px; padding: 8px 22px;
+      font-size: 16px; cursor:pointer; font-weight:500; transition:.2s;
+    }
+    #dialog .dialog-btn:hover { background: #5945b6;}
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <span class="logo">M</span>
+    <span class="title">思维导图</span>
+    <button class="btn add" id="btn-addroot" onclick="addRoot()">+ 添加中心主题</button>
+    <button class="btn" onclick="onNewMap()">⟳ 新建</button>
+    <button class="btn" onclick="saveMap()">💾 保存</button>
+    <button class="btn" onclick="showSidebar()">📁 加载</button>
+    <div class="user-info" id="user-info">
+      <button class="btn" id="login-btn" onclick="googleLogin()">Google登录</button>
+    </div>
+  </div>
+  <div id="mindmap-container">
+    <div id="mindmap"></div>
+    <div id="sidebar">
+      <h3>我的导图</h3>
+      <div class="thumb-list" id="thumb-list"></div>
+    </div>
+    <div id="overlay">
+      <div id="dialog">
+        <div id="dialog-msg"></div>
+        <button class="dialog-btn" id="dialog-save-btn">保存</button>
+        <button class="dialog-btn" onclick="hideDialog()">取消</button>
+      </div>
+    </div>
+  </div>
+  <div class="mindmap-fab-wrap">
+    <button class="mindmap-fab" onclick="zoomOut()">-</button>
+    <button class="mindmap-fab" onclick="zoomIn()">+</button>
+  </div>
+  <div class="shortcutbar">
+    <kbd>Enter</kbd> 添加节点
+    <kbd>Backspace</kbd> 删除节点
+    <span>双击</span> 编辑节点
+  </div>
+  <script>
+    // ====== 1. 替换为你的firebaseConfig ======
+    const firebaseConfig = {
+      apiKey: "AIzaSyCcsz9Lg3KmgvD_SXUdy4V5x7aCQtSdI-s",
+  authDomain: "webs-d0804.firebaseapp.com",
+  databaseURL: "https://webs-d0804-default-rtdb.firebaseio.com",
+  projectId: "webs-d0804",
+  storageBucket: "webs-d0804.firebasestorage.app",
+  messagingSenderId: "195195304680",
+  appId: "1:195195304680:web:01c68159689678c7f4275d",
+  measurementId: "G-RRQ7RFHV76"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // ========== 2. 登录&用户信息 ==========
+    let currentUser = null;
+    function googleLogin() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider)
+        .then(result => {
+          currentUser = result.user;
+          renderUser();
+          loadSidebarIfVisible();
+        }).catch(e => alert('登录失败: ' + e.message));
+    }
+    function logout() {
+      auth.signOut().then(() => {
+        currentUser = null;
+        renderUser();
+        render();
+      });
+    }
+    function renderUser() {
+      const userInfo = document.getElementById('user-info');
+      if (auth.currentUser) {
+        userInfo.innerHTML =
+          `<img class="avatar" src="${auth.currentUser.photoURL || ''}" alt=""/>`
+          + `<span>${auth.currentUser.displayName || ''}</span>`
+          + `<button class="btn" onclick="logout()">退出</button>`;
+      } else {
+        userInfo.innerHTML = `<button class="btn" id="login-btn" onclick="googleLogin()">Google登录</button>`;
+      }
+    }
+    auth.onAuthStateChanged(user => {
+      currentUser = user;
+      renderUser();
+      render();
+      loadSidebarIfVisible();
+    });
+
+    // ========== 3. 思维导图功能 ==========
+    let nodes = [];
+    let idCounter = 1;
+    let selectedId = null;
+    let editingNodeId = null;
+    let scale = 1;
+
+    const mindmap = document.getElementById('mindmap');
+    const sidebar = document.getElementById('sidebar');
+    const thumbList = document.getElementById('thumb-list');
+    const btnAddRoot = document.getElementById('btn-addroot');
+
+    function render() {
+      mindmap.innerHTML = '';
+      btnAddRoot.style.display = nodes.length ? 'none' : '';
+      nodes.forEach(n=>{
+        if(n.parent!==null && n.parent!==undefined){
+          let p = nodes.find(nn=>nn.id===n.parent);
+          if(p) drawLine(p, n, p.id === 1 ? "#f4c24d" : "#bfbefc");
+        }
+      });
+      nodes.forEach(n=>{
+        let div = document.createElement('div');
+        div.className = 'node' + (selectedId===n.id?' selected':'') + (n.id===1?' root':'');
+        div.style.left = n.x+'px';
+        div.style.top = n.y+'px';
+
+        // 内容
+        if(editingNodeId === n.id) {
+          let input = document.createElement('input');
+          input.value = n.text;
+          input.onblur = function() { finishEdit(n, input.value); };
+          input.onkeydown = function(e) {
+            if(e.key === "Enter") input.blur();
+            else if(e.key === "Escape") { editingNodeId = null; render(); }
+          };
+          setTimeout(()=>{ input.focus(); input.select(); }, 0);
+          div.appendChild(input);
+        } else {
+          let btn = document.createElement('button');
+          btn.style = "all:unset;cursor:pointer;display:inline-block;width:auto;font:inherit;background:none;";
+          btn.textContent = n.text;
+          btn.ondblclick = function(e){
+            e.stopPropagation();
+            editingNodeId = n.id;
+            render();
+          };
+          btn.onclick = function(e){
+            e.stopPropagation(); selectedId = n.id; render();
+          };
+          div.appendChild(btn);
+        }
+
+        // 加号按钮
+        let plusBtn = document.createElement('button');
+        plusBtn.className = 'add-child-btn';
+        plusBtn.textContent = "+";
+        plusBtn.title = "添加子节点";
+        plusBtn.onclick = function(e){
+          e.stopPropagation();
+          addNode(n.id);
+        };
+        div.appendChild(plusBtn);
+
+        // 删除按钮
+        if(n.id !== 1) {
+          let delBtn = document.createElement('button');
+          delBtn.className = 'del-btn';
+          delBtn.textContent = "×";
+          delBtn.title = "删除此节点";
+          delBtn.onclick = function(e){
+            e.stopPropagation();
+            deleteNode(n.id);
+          };
+          div.appendChild(delBtn);
+        }
+
+        // 拖动
+        div.onmousedown = function(e){
+          if(e.target.classList.contains('add-child-btn') || e.target.classList.contains('del-btn') || editingNodeId===n.id) return;
+          let startX = e.clientX, startY = e.clientY;
+          let oriX = n.x, oriY = n.y;
+          document.onmousemove = function(ev){
+            n.x = oriX + (ev.clientX - startX)/scale;
+            n.y = oriY + (ev.clientY - startY)/scale;
+            render();
+          };
+          document.onmouseup = function(){
+            document.onmousemove = null; document.onmouseup = null;
+          };
+        };
+
+        mindmap.appendChild(div);
+      });
+      mindmap.style.transform = `scale(${scale})`;
+    }
+
+    function finishEdit(n, val) {
+      n.text = val.trim() || "未命名";
+      editingNodeId = null; render();
+    }
+
+    function drawLine(from, to, color="#bfbefc"){
+      let x1 = from.x + 90, y1 = from.y + 25;
+      let x2 = to.x + 20, y2 = to.y + 25;
+      let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.classList.add('line');
+      svg.style.left = Math.min(x1,x2)-30+"px";
+      svg.style.top = Math.min(y1,y2)-30+"px";
+      svg.style.width = Math.abs(x2-x1)+60+"px";
+      svg.style.height = Math.abs(y2-y1)+60+"px";
+      svg.innerHTML = `<path d="M ${x1-Math.min(x1,x2)+30} ${y1-Math.min(y1,y2)+30} Q ${(x1-Math.min(x1,x2)+x2-Math.min(x1,x2))/2+30} ${(y1-Math.min(y1,y2)+y2-Math.min(y1,y2))/2+30-30}, ${x2-Math.min(x1,x2)+30} ${y2-Math.min(y1,y2)+30}"
+        stroke="${color}" stroke-width="3" fill="none" />`;
+      mindmap.appendChild(svg);
+    }
+
+    function addRoot() {
+      if(nodes.length>0) { alert("只能有一个中心主题"); return; }
+      nodes.push({id:1, text:"中心主题", x:600, y:320, parent:null});
+      idCounter=2; selectedId=1; editingNodeId=1;
+      render();
+    }
+
+    function addNode(parentId){
+      let p = nodes.find(n=>n.id===parentId);
+      let children = nodes.filter(n=>n.parent===parentId);
+      let baseAngle = Math.PI/2, dAng = Math.PI/3, idx = children.length;
+      let angle = baseAngle + (idx - (children.length-1)/2) * dAng;
+      let radius = 180;
+      let newX = p.x + radius * Math.cos(angle);
+      let newY = p.y + radius * Math.sin(angle);
+      let newId = idCounter++;
+      nodes.push({
+        id:newId,
+        text:"新节点",
+        x:newX,
+        y:newY,
+        parent:parentId
+      });
+      selectedId=newId; editingNodeId=newId;
+      render();
+    }
+
+    function deleteNode(nodeId) {
+      delRec(nodeId);
+      selectedId = nodes[0]?.id || null; render();
+    }
+    function delRec(id){
+      nodes.filter(n=>n.parent===id).forEach(n=>delRec(n.id));
+      nodes = nodes.filter(n=>n.id!==id);
+    }
+
+    function zoomIn(){ scale *= 1.15; render();}
+    function zoomOut(){ scale /= 1.15; render();}
+
+    // 快捷键
+    document.addEventListener("keydown",function(e){
+      if(document.activeElement.tagName==="INPUT") return;
+      if(e.key==="Enter" && selectedId!==null){ addNode(selectedId); }
+      else if(e.key==="Backspace" && selectedId && selectedId!==1){ deleteNode(selectedId); }
+    });
+
+    // ========== 4. 云端保存与加载 ==========
+    function saveMap(){
+      if (!auth.currentUser) return alert('请先登录再保存');
+      if(!nodes.length) return alert("当前画布为空。");
+      let title = nodes.find(n=>n.id===1)?.text || "思维导图";
+      const uid = auth.currentUser.uid;
+      db.collection('mindmaps')
+        .add({
+          uid,
+          title,
+          nodes: JSON.parse(JSON.stringify(nodes)),
+          time: new Date().toISOString()
+        })
+        .then(() => {
+          alert("已保存到云端！");
+          loadSidebarIfVisible();
+        })
+        .catch(e => alert('保存失败: ' + e.message));
+    }
+
+    function loadSidebarIfVisible() {
+      if(sidebar.style.display==='flex') renderSidebar();
+    }
+
+    // 侧边栏
+    function showSidebar(){
+      renderSidebar();
+      sidebar.style.display="flex";
+      document.body.style.overflow="hidden";
+    }
+    function hideSidebar(){
+      sidebar.style.display="none";
+      document.body.style.overflow="";
+    }
+    sidebar.onclick = function(e){
+      if(e.target===sidebar) hideSidebar();
+    }
+    function renderSidebar(){
+      if(!auth.currentUser) {
+        thumbList.innerHTML = `<div style="color:#bbb;font-size:15px;margin:25px 0;text-align:center;">请先登录</div>`;
+        return;
+      }
+      const uid = auth.currentUser.uid;
+      db.collection('mindmaps').where('uid','==',uid).orderBy('time','desc')
+        .get().then(snapshot=>{
+          thumbList.innerHTML = '';
+          if(snapshot.empty) {
+            thumbList.innerHTML = `<div style="color:#bbb;font-size:15px;margin:25px 0;text-align:center;">暂无历史导图</div>`;
+            return;
+          }
+          snapshot.forEach(doc=>{
+            const item = doc.data();
+            let div = document.createElement('div');
+            div.className = 'thumb-item';
+            div.onclick = function(){
+              nodes = JSON.parse(JSON.stringify(item.nodes));
+              idCounter = Math.max(...nodes.map(n=>n.id))+1;
+              selectedId = nodes[0]?.id || null;
+              editingNodeId = null;
+              hideSidebar();
+              render();
+            };
+            let title = document.createElement('div');
+            title.className = 'thumb-title';
+            title.textContent = item.title;
+            div.appendChild(title);
+            let svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+            svg.setAttribute("class","thumb-svg");
+            svg.setAttribute("width","190"); svg.setAttribute("height","62");
+            renderThumbSvg(svg, item.nodes);
+            div.appendChild(svg);
+            thumbList.appendChild(div);
+          });
+        });
+    }
+    function renderThumbSvg(svg, nodes0){
+      let ns = nodes0.map(n=>({...n}));
+      let minX = Math.min(...ns.map(n=>n.x)), maxX = Math.max(...ns.map(n=>n.x));
+      let minY = Math.min(...ns.map(n=>n.y)), maxY = Math.max(...ns.map(n=>n.y));
+      let sx = 170/Math.max(120,maxX-minX+1), sy=40/Math.max(30,maxY-minY+1);
+      let tx = (190 - (maxX-minX)*sx)/2 - minX*sx + 10;
+      let ty = (62 - (maxY-minY)*sy)/2 - minY*sy + 2;
+      svg.innerHTML = '';
+      ns.forEach(n=>{
+        if(n.parent!==null && n.parent!==undefined){
+          let p = ns.find(nn=>nn.id===n.parent);
+          if(p){
+            let x1 = p.x*sx+tx+40, y1 = p.y*sy+ty+15;
+            let x2 = n.x*sx+tx+15, y2 = n.y*sy+ty+15;
+            let c = p.id===1?"#f4c24d":"#bfbefc";
+            let path = document.createElementNS("http://www.w3.org/2000/svg","path");
+            path.setAttribute("d",`M${x1},${y1} Q${(x1+x2)/2},${(y1+y2)/2-12},${x2},${y2}`);
+            path.setAttribute("stroke",c); path.setAttribute("stroke-width","2.3"); path.setAttribute("fill","none");
+            svg.appendChild(path);
+          }
+        }
+      });
+      ns.forEach(n=>{
+        let x = n.x*sx+tx+(n.id===1?40:15), y = n.y*sy+ty+15;
+        let r = n.id===1?15:10;
+        let circ = document.createElementNS("http://www.w3.org/2000/svg","circle");
+        circ.setAttribute("cx",x); circ.setAttribute("cy",y); circ.setAttribute("r",r);
+        circ.setAttribute("fill",n.id===1?"#ffe08b":"#fff");
+        circ.setAttribute("stroke",n.id===1?"#f4c24d":"#bfbefc");
+        circ.setAttribute("stroke-width",n.id===1?"2.5":"2");
+        svg.appendChild(circ);
+      });
+    }
+
+    function onNewMap() {
+      if(nodes.length>0){
+        showDialog("是否保存当前画布？", ()=>{saveMap(); newMap();});
+      } else {
+        newMap();
+      }
+    }
+    function newMap(){
+      nodes = [];
+      idCounter = 1;
+      selectedId = null;
+      editingNodeId = null;
+      render();
+    }
+
+    mindmap.onclick = ()=>{selectedId=null;render();};
+    document.body.addEventListener("keydown",function(e){
+      if(e.key==="Escape") hideSidebar();
+    });
+
+    // 对话框
+    function showDialog(msg, onSave) {
+      document.getElementById('dialog-msg').innerText = msg;
+      document.getElementById('overlay').style.display = 'flex';
+      let saveBtn = document.getElementById('dialog-save-btn');
+      saveBtn.onclick = function() {
+        hideDialog();
+        onSave && onSave();
+      };
+    }
+    function hideDialog() { document.getElementById('overlay').style.display = 'none'; }
+
+    render();
+  </script>
+</body>
+</html>
