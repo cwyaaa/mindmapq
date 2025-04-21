@@ -9,6 +9,34 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
   <style>
+#sidebar-mask {
+  display:none;
+  position:fixed; left:0; top:60px; width:100vw; height:calc(100vh - 60px);
+  background:rgba(40,36,87,0.12); z-index:14;
+}
+#sidebar {
+  position:fixed; top:60px; left:0;
+  width:250px; height:calc(100vh - 60px);
+  background:#fff; box-shadow: 2px 0 16px #b7aefa33; z-index:15;
+  display:none; flex-direction:column; padding:15px 0 0 0; overflow-y:auto;
+  transition: left .18s;
+}
+#sidebar h3 { font-size:15px; margin:0 0 7px 21px; color:#8066e1;}
+.thumb-list { width:100%; display:flex; flex-direction:column; gap:13px; padding:0 12px 10px 12px;}
+.thumb-item {
+  background: #f8f8fd; border-radius:8px; box-shadow:0 1px 4px #ddd5fa33; padding:10px 8px 7px 8px;
+  margin-bottom: 2px; cursor:pointer; border:1.5px solid transparent; transition:.15s;
+  display:flex; flex-direction:column; align-items:center; font-size:12px;
+}
+.thumb-item.selected, .thumb-item:hover { border-color:#8066e1; background:#f1edfa;}
+.thumb-title {
+  font-size:12px; color:#8066e1; margin-bottom:4px; font-weight:bold;
+  text-align:center; width: 100%; word-break:break-all;
+}
+.thumb-svg {
+  background:#fff; border-radius:5px; margin-bottom:2px; box-shadow:0 1px 3px #ddd4ff22;
+  width:130px; height:38px; display:block;
+}
     body { margin:0; background:#f5f6fa; font-family: Arial,'微软雅黑'; }
     #toolbar {
       width: 100vw; height: 60px; background: #8066e1; color: #fff; display: flex; align-items: center;
@@ -250,18 +278,18 @@
   </div>
   <div id="color-bar"></div>
    <div id="mindmap-container">
-    <div id="mindmap"></div>
-    <input id="img-upload" type="file" accept="image/*">
-    <div id="sidebar">
-      <h3>我的线上导图</h3>
+  <div id="mindmap"></div>
+  <input id="img-upload" type="file" accept="image/*">
+  <!-- 侧边栏遮罩，必须在侧栏前 -->
+  <div id="sidebar-mask"></div>
+  <!-- 左侧侧边栏 -->
+  <div id="sidebar">
+     <h3>我的线上导图</h3>
       <div class="thumb-list" id="thumb-list"></div>
     </div>
     <div id="overlay">
       <div id="dialog">
         <div id="dialog-msg"></div>
-        <button class="dialog-btn" id="dialog-save-btn">保存</button>
-        <button class="dialog-btn" onclick="hideDialog()">取消</button>
-      </div>
     </div>
   </div>
   <div class="mindmap-fab-wrap">
@@ -782,16 +810,19 @@ auth.onAuthStateChanged(user => {
 
     function showSidebar(){
       renderSidebar();
-      sidebar.style.display="flex";
+      document.getElementById('sidebar').style.display="flex";
+      document.getElementById('sidebar-mask').style.display="block";
       document.body.style.overflow="hidden";
     }
     function hideSidebar(){
-      sidebar.style.display="none";
+      document.getElementById('sidebar').style.display="none";
+      document.getElementById('sidebar-mask').style.display="none";
       document.body.style.overflow="";
     }
-    sidebar.onclick = function(e){
-      if(e.target===sidebar) hideSidebar();
-    }
+      document.getElementById('sidebar-mask').onclick = hideSidebar;
+      document.getElementById('sidebar').onclick = function(e){
+      if(e.target===this) hideSidebar();
+      }
     function renderSidebar(){
       if(!auth.currentUser) {
         thumbList.innerHTML = `<div style="color:#bbb;font-size:12px;margin:18px 0;text-align:center;">请先登录</div>`;
