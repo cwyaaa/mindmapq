@@ -249,11 +249,21 @@
     </div>
   </div>
   <div id="color-bar"></div>
-  <div id="mindmap-container">
+   <div id="mindmap-container">
     <div id="mindmap"></div>
     <input id="img-upload" type="file" accept="image/*">
     <div id="sidebar">
-           <div class="thumb-list" id="thumb-list"></div>
+      <h3>我的线上导图</h3>
+      <div class="thumb-list" id="thumb-list"></div>
+    </div>
+    <div id="overlay">
+      <div id="dialog">
+        <div id="dialog-msg"></div>
+        <button class="dialog-btn" id="dialog-save-btn">保存</button>
+        <button class="dialog-btn" onclick="hideDialog()">取消</button>
+      </div>
+    </div>
+  </div>
   <div class="mindmap-fab-wrap">
     <button class="mindmap-fab-btn" onclick="zoomIn()" title="放大">
       <svg width="25" height="25" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#fff" stroke="#8066e1" stroke-width="1.4"/><rect x="9" y="5" width="2" height="10" rx="1" fill="#8066e1"/><rect x="5" y="9" width="10" height="2" rx="1" fill="#8066e1"/></svg>
@@ -280,7 +290,60 @@
     <span style="margin-left:12px;color:#8066e1;font-weight:500">按住空白处拖动画布</span>
   </div>
   <script>
-    // ...Firebase配置同前...
+   // ==== Firebase 配置（你的 firebaseConfig 保持不变） ====
+const firebaseConfig = {
+  apiKey: "AIzaSyCcsz9Lg3KmgvD_SXUdy4V5x7aCQtSdI-s",
+  authDomain: "webs-d0804.firebaseapp.com",
+  databaseURL: "https://webs-d0804-default-rtdb.firebaseio.com",
+  projectId: "webs-d0804",
+  storageBucket: "webs-d0804.firebasestorage.app",
+  messagingSenderId: "195195304680",
+  appId: "1:195195304680:web:01c68159689678c7f4275d",
+  measurementId: "G-RRQ7RFHV76"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+let currentUser = null;
+
+// Google 登录
+function googleLogin() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider)
+    .then(result => {
+      currentUser = result.user;
+      renderUser();
+      loadSidebarIfVisible && loadSidebarIfVisible();
+    }).catch(e => alert('登录失败: ' + e.message));
+}
+
+function logout() {
+  auth.signOut().then(() => {
+    currentUser = null;
+    renderUser();
+    render && render();
+  });
+}
+
+// 用户信息 UI
+function renderUser() {
+  const userInfo = document.getElementById('user-info');
+  if (auth.currentUser) {
+    userInfo.innerHTML =
+      `<img class="avatar" src="${auth.currentUser.photoURL || ''}" alt=""/>`
+      + `<span>${auth.currentUser.displayName || ''}</span>`
+      + `<button class="btn" onclick="logout()">退出</button>`;
+  } else {
+    userInfo.innerHTML = `<button class="btn" id="login-btn" onclick="googleLogin()">Google登录</button>`;
+  }
+}
+auth.onAuthStateChanged(user => {
+  currentUser = user;
+  renderUser();
+  render && render();
+  loadSidebarIfVisible && loadSidebarIfVisible();
+});
 
     // 颜色方案
     const COLOR_LIST = [
@@ -694,10 +757,150 @@
       }
     });
 
-    // ...云端相关、侧栏、dialog等同前...
+   function saveCloud(){
+      if (!auth.currentUser) return alert('请先登录再保存到云端');
+      if(!nodes.length) return alert("当前画布为空。");
+      let title = nodes.find(n=>n.id===1)?.text || "思维导图";
+      const uid = auth.currentUser.uid;
+      db.collection('mindmaps')
+        .add({
+          uid: uid,
+          title: title,
+          nodes: JSON.parse(JSON.stringify(nodes)),
+          time: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        .then(() => {
+          alert("已保存到云端！");
+          loadSidebarIfVisible();
+        })
+        .catch(e => alert('保存失败: ' + e.message));
+    }
+
+    function loadSidebarIfVisible() {
+      if(sidebar.style.display==='flex') renderSidebar();
+    }
+
+    function showSidebar(){
+      renderSidebar();
+      sidebar.style.display="flex";
+      document.body.style.overflow="hidden";
+    }
+    function hideSidebar(){
+      sidebar.style.display="none";
+      document.body.style.overflow="";
+    }
+    sidebar.onclick = function(e){
+      if(e.target===sidebar) hideSidebar();
+    }
+    function renderSidebar(){
+      if(!auth.currentUser) {
+        thumbList.innerHTML = `<div style="color:#bbb;font-size:12px;margin:18px 0;text-align:center;">请先登录</div>`;
+        return;
+      }
+      const uid = auth.currentUser.uid;
+      db.collection('mindmaps')
+        .where('uid', '==', uid)
+        .orderBy('time', 'desc')
+        .limit(30)
+        .get()
+        .then(snapshot=>{
+          thumbList.innerHTML = '';
+          if(snapshot.empty) {
+            thumbList.innerHTML = `<div style="color:#bbb;font-size:12px;margin:18px 0;text-align:center;">暂无线上导图</div>`;
+            return;
+          }
+          snapshot.forEach(doc=>{
+            const item = doc.data();
+            let div = document.createElement('div');
+            div.className = 'thumb-item';
+            div.onclick = function(){
+              nodes = JSON.parse(JSON.stringify(item.nodes));
+              idCounter = Math.max(...nodes.map(n=>n.id))+1;
+              selectedId = nodes[0]?.id || null;
+              editingNodeId = null;
+              hideSidebar();
+              render();
+            };
+            let title = document.createElement('div');
+            title.className = 'thumb-title';
+            title.textContent = item.title;
+            div.appendChild(title);
+            let svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+            svg.setAttribute("class","thumb-svg");
+            svg.setAttribute("width","130"); svg.setAttribute("height","38");
+            renderThumbSvg(svg, item.nodes);
+            div.appendChild(svg);
+            thumbList.appendChild(div);
+          });
+        });
+    }
+    function renderThumbSvg(svg, nodes0){
+      let ns = nodes0.map(n=>({...n}));
+      let minX = Math.min(...ns.map(n=>n.x)), maxX = Math.max(...ns.map(n=>n.x));
+      let minY = Math.min(...ns.map(n=>n.y)), maxY = Math.max(...ns.map(n=>n.y));
+      let sx = 110/Math.max(60,maxX-minX+1), sy=22/Math.max(16,maxY-minY+1);
+      let tx = (130 - (maxX-minX)*sx)/2 - minX*sx + 6;
+      let ty = (38 - (maxY-minY)*sy)/2 - minY*sy + 2;
+      svg.innerHTML = '';
+      ns.forEach(n=>{
+        if(n.parent!==null && n.parent!==undefined){
+          let p = ns.find(nn=>nn.id===n.parent);
+          if(p){
+            let x1 = p.x*sx+tx+23, y1 = p.y*sy+ty+8;
+            let x2 = n.x*sx+tx+8, y2 = n.y*sy+ty+8;
+            let c = p.id===1?"#f4c24d":"#bfbefc";
+            let path = document.createElementNS("http://www.w3.org/2000/svg","path");
+            path.setAttribute("d",`M${x1},${y1} Q${(x1+x2)/2},${(y1+y2)/2-7},${x2},${y2}`);
+            path.setAttribute("stroke",c); path.setAttribute("stroke-width","1.3"); path.setAttribute("fill","none");
+            svg.appendChild(path);
+          }
+        }
+      });
+      ns.forEach(n=>{
+        let x = n.x*sx+tx+(n.id===1?23:8), y = n.y*sy+ty+8;
+        let r = n.id===1?8:5;
+        let circ = document.createElementNS("http://www.w3.org/2000/svg","circle");
+        circ.setAttribute("cx",x); circ.setAttribute("cy",y); circ.setAttribute("r",r);
+        circ.setAttribute("fill",n.id===1?"#ffe08b":"#fff");
+        circ.setAttribute("stroke",n.id===1?"#f4c24d":"#bfbefc");
+        circ.setAttribute("stroke-width",n.id===1?"1.2":"1");
+        svg.appendChild(circ);
+      });
+    }
+
+    function onNewMap() {
+      if(nodes.length>0){
+        showDialog("是否保存当前画布？", ()=>{saveCloud(); newMap();});
+      } else {
+        newMap();
+      }
+    }
+    function newMap(){
+      nodes = [];
+      idCounter = 1;
+      selectedId = null;
+      editingNodeId = null;
+      render();
+    }
+
+    mindmap.onclick = ()=>{selectedId=null;render();};
+    document.body.addEventListener("keydown",function(e){
+      if(e.key==="Escape") hideSidebar();
+    });
+
+    // 对话框
+    function showDialog(msg, onSave) {
+      document.getElementById('dialog-msg').innerText = msg;
+      document.getElementById('overlay').style.display = 'flex';
+      let saveBtn = document.getElementById('dialog-save-btn');
+      saveBtn.onclick = function() {
+        hideDialog();
+        onSave && onSave();
+      };
+    }
+    function hideDialog() { document.getElementById('overlay').style.display = 'none'; }
 
     render();
-    renderColorBar();
   </script>
 </body>
 </html>
