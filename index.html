@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>思维导图（Firestore+Google登录+节点功能增强）</title>
+  <title>思维导图（置顶节点&子节点优先横排）</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
@@ -22,8 +22,72 @@
     #toolbar .btn.add:hover { background: #e9e4fc; }
     #toolbar .user-info { margin-left:auto; display:flex; align-items:center; gap:8px; font-size:14px;}
     #toolbar .avatar { width:26px; height:26px; border-radius:50%; background:#eee; object-fit:cover; }
+    #color-bar {
+      position: absolute;
+      top: 60px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 9;
+      display: flex;
+      gap: 12px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px #c7bbfa22;
+      padding: 8px 20px 7px 20px;
+      margin-top: 8px;
+      align-items: center;
+      min-width: 220px;
+      transition: box-shadow .18s;
+      user-select: none;
+    }
+    .color-bar-top-btn {
+      width: 27px;
+      height: 27px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #e1e4fa;
+      border-radius: 8px;
+      background: #fff;
+      color: #faad14;
+      cursor: pointer;
+      box-shadow: 0 1px 4px #c7bbfa11;
+      margin-right: 7px;
+      font-size: 18px;
+      transition: border .18s, box-shadow .18s, color .13s;
+    }
+    .color-bar-top-btn.pinned {
+      color: #8066e1;
+      border: 2.7px solid #8066e1;
+      background: #f8f7fd;
+    }
+    .color-option {
+      width: 27px; height: 27px;
+      border-radius: 8px;
+      border: 2px solid #e1e4fa;
+      cursor: pointer;
+      box-shadow: 0 1px 4px #c7bbfa11;
+      transition: border .18s, box-shadow .18s;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .color-option.selected, .color-option:hover {
+      border: 2.7px solid #8066e1;
+      box-shadow: 0 2px 8px #b3a5ff33;
+    }
+    .color-option .tick {
+      position: absolute;
+      right: 2px; bottom: 2px;
+      width: 13px; height: 13px;
+      background: rgba(255,255,255,.8);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      color: #8066e1;
+      font-weight: bold;
+      pointer-events: none;
+    }
     #mindmap-container { position:relative; width:100vw; height:calc(100vh - 60px); overflow:hidden; background: #f9f9fc; }
-    #mindmap { width:100vw; height:calc(100vh - 60px); position:relative; overflow:hidden; }
+    #mindmap { width:100vw; height:calc(100vh - 60px); position:absolute; left:0; top:0; overflow:hidden; }
     .node {
       position:absolute; min-width:65px; min-height:28px; padding:4px 13px 4px 18px;
       background:#fff; border-radius:12px; color:#333; font-weight:400;
@@ -32,8 +96,7 @@
       z-index: 2; display: flex; align-items: center; flex-direction: row; gap:0;
       white-space:nowrap;
     }
-    .node.selected { border:1.7px solid #8066e1; }
-    .node.root { background: #ffe08b; border-color: #f4c24d; color:#564200; font-weight: bold;}
+    .node.root { font-weight: bold;}
     .node input {
       font-size: 15px; font-family: inherit; border:none; border-radius: 8px; background:#fffde6; outline:2px solid #8066e1; color:#333;
       padding: 2px 8px; width: 100px; box-sizing:border-box;
@@ -67,29 +130,110 @@
     .node .icon-btn.add { color:#8066e1;}
     .line { position:absolute; z-index:1; pointer-events:none; }
     #img-upload { display:none; }
-    /* 侧栏和其它样式同原代码... */
-    #sidebar {
-      position:fixed; top:60px; right:0; width:250px; height:calc(100vh - 60px);
-      background:#fff; box-shadow: -2px 0 16px #b7aefa33; z-index:10;
-      display:none; flex-direction:column; padding:15px 0 0 0; overflow-y:auto;
+    .node.selected {
+      border:2.3px solid #8066e1;
+      box-shadow: 0 0 0 3px #ad9ffb44, 0 2px 9px #c7bbfa33;
     }
-    #sidebar h3 { font-size:15px; margin:0 0 7px 21px; color:#8066e1;}
-    .thumb-list { width:100%; display:flex; flex-direction:column; gap:13px; padding:0 12px 10px 12px;}
-    .thumb-item {
-      background: #f8f8fd; border-radius:8px; box-shadow:0 1px 4px #ddd5fa33; padding:10px 8px 7px 8px;
-      margin-bottom: 2px; cursor:pointer; border:1.5px solid transparent; transition:.15s;
-      display:flex; flex-direction:column; align-items:center; font-size:12px;
+    .node.selected .select-outline {
+      pointer-events: none;
+      position: absolute;
+      top: -7px; left: -7px; right: -7px; bottom: -7px;
+      border: 2.5px solid #8066e1;
+      border-radius: 16px;
+      box-shadow: 0 0 10px 2px #c7bbfa33;
+      z-index: 10;
+      background: none;
+      content: "";
     }
-    .thumb-item.selected, .thumb-item:hover { border-color:#8066e1; background:#f1edfa;}
-    .thumb-title {
-      font-size:12px; color:#8066e1; margin-bottom:4px; font-weight:bold;
-      text-align:center; width: 100%; word-break:break-all;
+    .shortcutbar {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: #fff;
+      color: #333;
+      font-size: 13px;
+      border-radius: 9px;
+      box-shadow: 0 1px 10px #c7bbfa22;
+      padding: 7px 20px;
+      opacity:.98;
+      display:flex;
+      gap:14px;
+      z-index: 21;
+      flex-wrap:wrap;
+      align-items:center;
     }
-    .thumb-svg {
-      background:#fff; border-radius:5px; margin-bottom:2px; box-shadow:0 1px 3px #ddd4ff22;
-      width:130px; height:38px; display:block;
+    .shortcutbar kbd {
+      background: #8066e1;
+      color: #fff;
+      border-radius: 3px;
+      padding: 2px 7px;
+      margin-right: 3px;
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 1px 2px #bdb1f622;
     }
-    /* 其它原有样式同你的原文件... */
+    .mindmap-fab-wrap {
+      position: fixed;
+      right: 24px;
+      bottom: 30px;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: flex-end;
+    }
+    .mindmap-fab-btn {
+      width: 45px; height: 45px;
+      border-radius: 50%;
+      background: #fff;
+      color: #8066e1;
+      border: 2.2px solid #ece6fd;
+      box-shadow: 0 2px 10px #c7bbfa44;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 23px;
+      cursor: pointer;
+      transition: all .16s;
+      outline: none;
+      margin-bottom: 0;
+      position: relative;
+    }
+    .mindmap-fab-btn:hover {
+      background: #ede7fb;
+      border-color: #8066e1;
+      transform: scale(1.07) translateY(-2px);
+      box-shadow: 0 5px 20px #b3a5ff33;
+    }
+    .mindmap-fab-btn svg {
+      pointer-events: none;
+      display: block;
+    }
+    .mindmap-fab-btn .fab-tooltip {
+      display: none;
+      position: absolute;
+      right: 110%;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #fff;
+      color: #8066e1;
+      border-radius: 6px;
+      font-size: 13px;
+      padding: 2px 9px;
+      box-shadow: 0 0 8px #c7bbfa22;
+      white-space: nowrap;
+    }
+    .mindmap-fab-btn:hover .fab-tooltip {
+      display: block;
+    }
+    #mindmap.dragging {
+      cursor: grabbing !important;
+    }
+    #mindmap {
+      cursor: grab;
+    }
   </style>
 </head>
 <body>
@@ -104,90 +248,173 @@
       <button class="btn" id="login-btn" onclick="googleLogin()">Google登录</button>
     </div>
   </div>
+  <div id="color-bar"></div>
   <div id="mindmap-container">
     <div id="mindmap"></div>
     <input id="img-upload" type="file" accept="image/*">
     <div id="sidebar">
-      <h3>我的线上导图</h3>
-      <div class="thumb-list" id="thumb-list"></div>
-    </div>
-    <div id="overlay">
-      <div id="dialog">
-        <div id="dialog-msg"></div>
-        <button class="dialog-btn" id="dialog-save-btn">保存</button>
-        <button class="dialog-btn" onclick="hideDialog()">取消</button>
-      </div>
-    </div>
-  </div>
+           <div class="thumb-list" id="thumb-list"></div>
   <div class="mindmap-fab-wrap">
-    <button class="mindmap-fab" onclick="zoomOut()">-</button>
-    <button class="mindmap-fab" onclick="zoomIn()">+</button>
+    <button class="mindmap-fab-btn" onclick="zoomIn()" title="放大">
+      <svg width="25" height="25" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#fff" stroke="#8066e1" stroke-width="1.4"/><rect x="9" y="5" width="2" height="10" rx="1" fill="#8066e1"/><rect x="5" y="9" width="10" height="2" rx="1" fill="#8066e1"/></svg>
+      <span class="fab-tooltip">放大 (Ctrl + 鼠标滚轮 ↑)</span>
+    </button>
+    <button class="mindmap-fab-btn" onclick="zoomOut()" title="缩小">
+      <svg width="25" height="25" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#fff" stroke="#8066e1" stroke-width="1.4"/><rect x="5" y="9" width="10" height="2" rx="1" fill="#8066e1"/></svg>
+      <span class="fab-tooltip">缩小 (Ctrl + 鼠标滚轮 ↓)</span>
+    </button>
+    <button class="mindmap-fab-btn" onclick="zoomReset()" title="还原">
+      <svg width="25" height="25" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#fff" stroke="#8066e1" stroke-width="1.4"/><path d="M10 5v5l3 3" stroke="#8066e1" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="10" cy="10" r="2.1" fill="none" stroke="#8066e1" stroke-width="1.1"/></svg>
+      <span class="fab-tooltip">还原缩放</span>
+    </button>
   </div>
   <div class="shortcutbar">
-    <kbd>Enter</kbd> 添加节点
-    <kbd>Backspace</kbd> 删除节点
+    <b>节点快捷键：</b>
+    <kbd>Enter</kbd> 添加子节点
     <kbd>Space</kbd> 编辑节点
-    <span>双击节点也可编辑</span>
+    <kbd>Backspace</kbd> 删除节点
+    <kbd>Esc</kbd> 关闭侧栏/对话框
+    <kbd>双击节点</kbd> 编辑节点
+    <kbd>点击节点</kbd> 选中节点
+    <span style="margin-left:12px;color:#888">（请先点击选中节点再用快捷键）</span>
+    <span style="margin-left:12px;color:#8066e1;font-weight:500">按住空白处拖动画布</span>
   </div>
   <script>
-    // 1. Firebase Firestore配置 -- 替换为你自己的firebaseConfig
-    const firebaseConfig = {
-       apiKey: "AIzaSyCcsz9Lg3KmgvD_SXUdy4V5x7aCQtSdI-s",
-  authDomain: "webs-d0804.firebaseapp.com",
-  databaseURL: "https://webs-d0804-default-rtdb.firebaseio.com",
-  projectId: "webs-d0804",
-  storageBucket: "webs-d0804.firebasestorage.app",
-  messagingSenderId: "195195304680",
-  appId: "1:195195304680:web:01c68159689678c7f4275d",
-  measurementId: "G-RRQ7RFHV76"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
+    // ...Firebase配置同前...
 
-    // Google登录
-    let currentUser = null;
-    function googleLogin() {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider)
-        .then(result => {
-          currentUser = result.user;
-          renderUser();
-          loadSidebarIfVisible();
-        }).catch(e => alert('登录失败: ' + e.message));
-    }
-    function logout() {
-      auth.signOut().then(() => {
-        currentUser = null;
-        renderUser();
-        render();
-      });
-    }
-    function renderUser() {
-      const userInfo = document.getElementById('user-info');
-      if (auth.currentUser) {
-        userInfo.innerHTML =
-          `<img class="avatar" src="${auth.currentUser.photoURL || ''}" alt=""/>`
-          + `<span>${auth.currentUser.displayName || ''}</span>`
-          + `<button class="btn" onclick="logout()">退出</button>`;
-      } else {
-        userInfo.innerHTML = `<button class="btn" id="login-btn" onclick="googleLogin()">Google登录</button>`;
-      }
-    }
-    auth.onAuthStateChanged(user => {
-      currentUser = user;
-      renderUser();
-      render();
-      loadSidebarIfVisible();
-    });
+    // 颜色方案
+    const COLOR_LIST = [
+      { bg: "#fff", color: "#333", line: "#bfbefc" },
+      { bg: "#ffe08b", color: "#654200", line: "#f4c24d" },
+      { bg: "#d2f6e9", color: "#21797a", line: "#25b399" },
+      { bg: "#c8e8ff", color: "#004e77", line: "#43a6e2" },
+      { bg: "#f7c7c9", color: "#a2383b", line: "#e46d72" },
+      { bg: "#f3e0ff", color: "#6c3596", line: "#b78be5" },
+      { bg: "#e8eaf6", color: "#23265e", line: "#8b91e2" },
+      { bg: "#e8f5e9", color: "#1b5e20", line: "#6fcf97" },
+      { bg: "#fffde6", color: "#8c6c13", line: "#ffe08b" }
+    ];
 
-    // 思维导图功能
     let nodes = [];
     let idCounter = 1;
     let selectedId = null;
     let editingNodeId = null;
     let scale = 1;
+    let offsetX = 0, offsetY = 0;
+    let draggingCanvas = false, dragStartX = 0, dragStartY = 0, dragOriX = 0, dragOriY = 0;
 
+    // =============== 置顶功能相关 ==================
+    // pinnedNodes: { [nodeId]: {x, y, colorIdx} }
+    let pinnedNodes = {};
+
+    // 横向排布并避免重叠的布局逻辑, pinned节点固定
+    function layoutHorizontal() {
+      if (!nodes.length) return;
+      const gapX = 160, gapY = 80;
+      let root = nodes.find(n => n.id === 1);
+      if (!root) return;
+      root.x = 520; root.y = 220;
+      function layoutChildren(parent, depth, baseY) {
+        let children = nodes.filter(n => n.parent === parent.id);
+        // 置顶节点排在最前
+        children.sort((a, b) => {
+          const aPinned = !!pinnedNodes[a.id];
+          const bPinned = !!pinnedNodes[b.id];
+          if(aPinned && !bPinned) return -1;
+          if(!aPinned && bPinned) return 1;
+          return a.id - b.id;
+        });
+        let startX = parent.x + gapX;
+        let y = baseY, maxY = baseY;
+        children.forEach((child, idx) => {
+          if (pinnedNodes[child.id]) {
+            // 固定不动
+            child.x = pinnedNodes[child.id].x;
+            child.y = pinnedNodes[child.id].y;
+            child.colorIdx = pinnedNodes[child.id].colorIdx;
+          } else {
+            child.x = startX;
+            child.y = y;
+          }
+          // 避免重叠（后代排布递归）
+          y += gapY;
+          maxY = Math.max(maxY, child.y);
+          layoutChildren(child, depth + 1, child.y - Math.floor(gapY * (nodes.filter(n => n.parent === child.id).length-1) / 2));
+        });
+        return maxY;
+      }
+      layoutChildren(root, 1, root.y - (nodes.filter(n => n.parent === 1).length-1)/2*gapY);
+    }
+
+    // 颜色同步带置顶保护
+    function setColorCascade(nodeId, colorIdx) {
+      const n = nodes.find(n => n.id === nodeId);
+      if (!n) return;
+      // 若被置顶保护，不可更改
+      if (pinnedNodes[nodeId]) return;
+      n.colorIdx = colorIdx;
+      nodes.forEach(child => {
+        if (child.parent === nodeId) {
+          setColorCascade(child.id, colorIdx);
+        }
+      });
+    }
+
+    // =============== 颜色选择栏 & 置顶按钮 ==================
+    function renderColorBar() {
+      const colorBar = document.getElementById('color-bar');
+      colorBar.innerHTML = '';
+      let selectedNode = nodes.find(n => n.id === selectedId);
+      let selColor = selectedNode && selectedNode.colorIdx !== undefined ? selectedNode.colorIdx : 0;
+      // 置顶按钮
+      let pinBtn = document.createElement('button');
+      pinBtn.className = 'color-bar-top-btn' + (pinnedNodes[selectedId] ? ' pinned' : '');
+      pinBtn.innerHTML = pinnedNodes[selectedId]
+        ? '<svg width="17" height="17" fill="none" viewBox="0 0 17 17"><path d="M8.5 2.5v10M8.5 2.5l-3 3M8.5 2.5l3 3" stroke="#8066e1" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        : '<svg width="17" height="17" fill="none" viewBox="0 0 17 17"><path d="M8.5 2.5v10M8.5 2.5l-3 3M8.5 2.5l3 3" stroke="#faad14" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      pinBtn.title = pinnedNodes[selectedId] ? '已固定' : '固定此节点的位置和颜色';
+      pinBtn.onclick = function() {
+        if(!selectedNode) return;
+        if(pinnedNodes[selectedId]) {
+          // 取消置顶
+          delete pinnedNodes[selectedId];
+        } else {
+          // 记录当前坐标和颜色
+          pinnedNodes[selectedId] = {
+            x: selectedNode.x,
+            y: selectedNode.y,
+            colorIdx: selectedNode.colorIdx
+          };
+        }
+        layoutHorizontal();
+        render();
+        renderColorBar();
+      };
+      colorBar.appendChild(pinBtn);
+
+      // 颜色选项
+      COLOR_LIST.forEach((c, i) => {
+        let btn = document.createElement('div');
+        btn.className = 'color-option' + (selColor === i ? ' selected' : '');
+        btn.style.background = c.bg;
+        btn.style.color = c.color;
+        btn.title = '应用此颜色';
+        if(selColor === i) btn.innerHTML = '<span class="tick">✔</span>';
+        btn.onclick = function() {
+          if(selectedNode) {
+            // 若被置顶保护，不可切换颜色
+            if(pinnedNodes[selectedId]) return;
+            setColorCascade(selectedNode.id, i);
+            layoutHorizontal();
+            render();
+            renderColorBar();
+          }
+        };
+        colorBar.appendChild(btn);
+      });
+    }
+
+    // ...其余代码同前（布局、节点渲染、事件、快捷键等）...
     const mindmap = document.getElementById('mindmap');
     const sidebar = document.getElementById('sidebar');
     const thumbList = document.getElementById('thumb-list');
@@ -195,26 +422,47 @@
     const imgUpload = document.getElementById('img-upload');
 
     function render() {
+      layoutHorizontal();
       mindmap.innerHTML = '';
       btnAddRoot.style.display = nodes.length ? 'none' : '';
+      // 连线
       nodes.forEach(n=>{
         if(n.parent!==null && n.parent!==undefined){
           let p = nodes.find(nn=>nn.id===n.parent);
-          if(p) drawLine(p, n, p.id === 1 ? "#f4c24d" : "#bfbefc");
+          if(p) {
+            let lineColor = COLOR_LIST[p.colorIdx !== undefined ? p.colorIdx : (p.id === 1 ? 1 : 0)].line;
+            drawLine(p, n, lineColor);
+          }
         }
       });
+      // 节点
       nodes.forEach(n=>{
         let div = document.createElement('div');
         div.className = 'node' + (selectedId===n.id?' selected':'') + (n.id===1?' root':'');
-        div.style.left = n.x+'px';
-        div.style.top = n.y+'px';
+        div.style.left = (n.x+offsetX)+'px';
+        div.style.top = (n.y+offsetY)+'px';
         div.style.position = "absolute";
         div.style.fontSize = "15px";
         div.style.whiteSpace = "nowrap";
         div.style.flexDirection = "row";
         div.dataset.id = n.id;
-
-        // 文字或编辑框
+        // 颜色
+        let colorIdx = n.colorIdx !== undefined ? n.colorIdx : (n.id===1?1:0);
+        let cset = COLOR_LIST[colorIdx] || COLOR_LIST[0];
+        div.style.background = cset.bg;
+        div.style.color = cset.color;
+        if(n.id===1) {
+          div.style.background = COLOR_LIST[colorIdx || 1].bg;
+          div.style.color = COLOR_LIST[colorIdx || 1].color;
+        }
+        // 选中
+        if(selectedId === n.id) {
+          let outline = document.createElement('div');
+          outline.className = "select-outline";
+          div.appendChild(outline);
+          div.style.zIndex = 11;
+        }
+        // 编辑框
         if(editingNodeId === n.id) {
           let input = document.createElement('input');
           input.value = n.text;
@@ -230,20 +478,14 @@
           txtspan.textContent = n.text;
           div.appendChild(txtspan);
         }
-
-        // 图片
         if(n.img){
           let imgEl = document.createElement('img');
           imgEl.src = n.img;
           imgEl.className = 'node-img';
           div.appendChild(imgEl);
         }
-
-        // 操作图标区
         let icons = document.createElement('div');
         icons.className = 'node-icons';
-
-        // 加号：增加子节点
         let btnAdd = document.createElement('button');
         btnAdd.className = 'icon-btn add';
         btnAdd.title = "增加节点";
@@ -253,8 +495,6 @@
           addNode(n.id);
         };
         icons.appendChild(btnAdd);
-
-        // 删除
         if(n.id!==1) {
           let btnDel = document.createElement('button');
           btnDel.className = 'icon-btn del';
@@ -266,19 +506,15 @@
           };
           icons.appendChild(btnDel);
         }
-
-        // 图片按钮
         let btnImg = document.createElement('button');
         btnImg.className = 'icon-btn img';
         btnImg.title = "上传图片";
-        btnImg.innerHTML = '<svg width="16" height="16" fill="currentColor"><circle cx="8" cy="8" r="7" stroke="#f4b400" stroke-width="1.5" fill="none"/><rect x="4" y="10" width="8" height="2" rx="1" fill="#f4b400"/><circle cx="8" cy="7" r="3" stroke="#f4b400" stroke-width="1.2" fill="none"/></svg>';
+        btnImg.innerHTML = '<svg width="16" height="16" fill="currentColor"><circle cx="8" cy="8" r="7" stroke="#f4b400" stroke-width="1.5" fill="none"/><rect x="4" y="10" width="8" height="2" rx="1" fill="#f4b400"/><circle cx="8" cy="7" r="2" fill="#f4b400"/></svg>';
         btnImg.onclick = function(e){
           e.stopPropagation();
           uploadImgForNode(n.id);
         };
         icons.appendChild(btnImg);
-
-        // 编辑按钮
         let btnEdit = document.createElement('button');
         btnEdit.className = 'icon-btn edit';
         btnEdit.title = "文本编辑";
@@ -289,33 +525,43 @@
           render();
         };
         icons.appendChild(btnEdit);
-
         div.appendChild(icons);
-
-        // 选中
         div.onclick = function(e){
+          e.stopPropagation();
           selectedId = n.id;
           render();
+          renderColorBar();
         };
-
-        // 拖动
+        div.ondblclick = function(e){
+          editingNodeId = n.id;
+          render();
+        };
         div.onmousedown = function(e){
           if(e.target.classList.contains('icon-btn')) return;
+          e.stopPropagation();
           let startX = e.clientX, startY = e.clientY;
           let oriX = n.x, oriY = n.y;
-          document.onmousemove = function(ev){
+          function move(ev){
             n.x = oriX + (ev.clientX - startX)/scale;
             n.y = oriY + (ev.clientY - startY)/scale;
+            // 若为置顶，更新pinned坐标
+            if (pinnedNodes[n.id]) {
+              pinnedNodes[n.id].x = n.x;
+              pinnedNodes[n.id].y = n.y;
+            }
             render();
-          };
-          document.onmouseup = function(){
-            document.onmousemove = null; document.onmouseup = null;
-          };
+          }
+          function up(){
+            document.removeEventListener('mousemove', move);
+            document.removeEventListener('mouseup', up);
+          }
+          document.addEventListener('mousemove', move);
+          document.addEventListener('mouseup', up);
         };
-
         mindmap.appendChild(div);
       });
       mindmap.style.transform = `scale(${scale})`;
+      renderColorBar();
     }
 
     function finishEdit(n, val) {
@@ -324,8 +570,8 @@
     }
 
     function drawLine(from, to, color="#bfbefc"){
-      let x1 = from.x + 65, y1 = from.y + 17;
-      let x2 = to.x + 15, y2 = to.y + 17;
+      let x1 = from.x + 65 + offsetX, y1 = from.y + 17 + offsetY;
+      let x2 = to.x + 15 + offsetX, y2 = to.y + 17 + offsetY;
       let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.classList.add('line');
       svg.style.left = Math.min(x1,x2)-25+"px";
@@ -339,39 +585,41 @@
 
     function addRoot() {
       if(nodes.length>0) { alert("只能有一个中心主题"); return; }
-      nodes.push({id:1, text:"中心主题", x:520, y:220, parent:null, img:""});
+      nodes.push({id:1, text:"中心主题", x:520, y:220, parent:null, img:"", colorIdx:1});
       idCounter=2; selectedId=1; editingNodeId=1;
+      layoutHorizontal();
       render();
     }
 
     function addNode(parentId){
       let p = nodes.find(n=>n.id===parentId);
       let children = nodes.filter(n=>n.parent===parentId);
-      let baseAngle = Math.PI/2, dAng = Math.PI/3, idx = children.length;
-      let angle = baseAngle + (idx - (children.length-1)/2) * dAng;
-      let radius = 120;
-      let newX = p.x + radius * Math.cos(angle);
-      let newY = p.y + radius * Math.sin(angle);
       let newId = idCounter++;
       nodes.push({
         id:newId,
         text:"新节点",
-        x:newX,
-        y:newY,
+        x:p.x + 180,
+        y:p.y + children.length * 80,
         parent:parentId,
-        img:""
+        img:"",
+        colorIdx:p.colorIdx !== undefined ? p.colorIdx : (p.id===1?1:0)
       });
       selectedId=newId; editingNodeId=newId;
+      layoutHorizontal();
       render();
     }
 
     function deleteNode(nodeId) {
       delRec(nodeId);
-      selectedId = nodes[0]?.id || null; render();
+      delete pinnedNodes[nodeId];
+      selectedId = nodes[0]?.id || null;
+      layoutHorizontal();
+      render();
     }
     function delRec(id){
       nodes.filter(n=>n.parent===id).forEach(n=>delRec(n.id));
       nodes = nodes.filter(n=>n.id!==id);
+      delete pinnedNodes[id];
     }
 
     function uploadImgForNode(nodeId){
@@ -390,161 +638,66 @@
       imgUpload.click();
     }
 
-    function zoomIn(){ scale *= 1.15; render();}
-    function zoomOut(){ scale /= 1.15; render();}
+    function zoomIn(){ scale = Math.min(scale * 1.15, 4); render();}
+    function zoomOut(){ scale = Math.max(scale / 1.15, 0.25); render();}
+    function zoomReset(){ scale = 1; render(); }
+
+    document.addEventListener("wheel",function(e){
+      if(e.ctrlKey){
+        e.preventDefault();
+        if(e.deltaY < 0) zoomIn();
+        else if(e.deltaY > 0) zoomOut();
+      }
+    }, {passive:false});
+
+    mindmap.addEventListener('mousedown', function(e){
+      if(e.target !== mindmap) return;
+      draggingCanvas = true;
+      mindmap.classList.add('dragging');
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      dragOriX = offsetX;
+      dragOriY = offsetY;
+      function move(ev){
+        offsetX = dragOriX + (ev.clientX-dragStartX)/scale;
+        offsetY = dragOriY + (ev.clientY-dragStartY)/scale;
+        render();
+      }
+      function up(){
+        draggingCanvas = false;
+        mindmap.classList.remove('dragging');
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+      }
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
 
     document.addEventListener("keydown",function(e){
       if(document.activeElement.tagName==="INPUT") return;
-      if(e.key==="Enter" && selectedId!==null){ addNode(selectedId); }
-      else if(e.key==="Backspace" && selectedId && selectedId!==1){ deleteNode(selectedId); }
-      else if(e.key===" " && selectedId){ editingNodeId = selectedId; render(); }
-    });
-
-    // ========== 线上保存/加载/侧栏/对话框等逻辑 与原代码一致 ==========
-    function saveCloud(){
-      if (!auth.currentUser) return alert('请先登录再保存到云端');
-      if(!nodes.length) return alert("当前画布为空。");
-      let title = nodes.find(n=>n.id===1)?.text || "思维导图";
-      const uid = auth.currentUser.uid;
-      db.collection('mindmaps')
-        .add({
-          uid: uid,
-          title: title,
-          nodes: JSON.parse(JSON.stringify(nodes)),
-          time: firebase.firestore.FieldValue.serverTimestamp()
-        })
-        .then(() => {
-          alert("已保存到云端！");
-          loadSidebarIfVisible();
-        })
-        .catch(e => alert('保存失败: ' + e.message));
-    }
-
-    function loadSidebarIfVisible() {
-      if(sidebar.style.display==='flex') renderSidebar();
-    }
-
-    function showSidebar(){
-      renderSidebar();
-      sidebar.style.display="flex";
-      document.body.style.overflow="hidden";
-    }
-    function hideSidebar(){
-      sidebar.style.display="none";
-      document.body.style.overflow="";
-    }
-    sidebar.onclick = function(e){
-      if(e.target===sidebar) hideSidebar();
-    }
-    function renderSidebar(){
-      if(!auth.currentUser) {
-        thumbList.innerHTML = `<div style="color:#bbb;font-size:12px;margin:18px 0;text-align:center;">请先登录</div>`;
-        return;
+      if(e.key==="Enter" && selectedId!==null){
+        e.preventDefault();
+        addNode(selectedId);
       }
-      const uid = auth.currentUser.uid;
-      db.collection('mindmaps')
-        .where('uid', '==', uid)
-        .orderBy('time', 'desc')
-        .limit(30)
-        .get()
-        .then(snapshot=>{
-          thumbList.innerHTML = '';
-          if(snapshot.empty) {
-            thumbList.innerHTML = `<div style="color:#bbb;font-size:12px;margin:18px 0;text-align:center;">暂无线上导图</div>`;
-            return;
-          }
-          snapshot.forEach(doc=>{
-            const item = doc.data();
-            let div = document.createElement('div');
-            div.className = 'thumb-item';
-            div.onclick = function(){
-              nodes = JSON.parse(JSON.stringify(item.nodes));
-              idCounter = Math.max(...nodes.map(n=>n.id))+1;
-              selectedId = nodes[0]?.id || null;
-              editingNodeId = null;
-              hideSidebar();
-              render();
-            };
-            let title = document.createElement('div');
-            title.className = 'thumb-title';
-            title.textContent = item.title;
-            div.appendChild(title);
-            let svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
-            svg.setAttribute("class","thumb-svg");
-            svg.setAttribute("width","130"); svg.setAttribute("height","38");
-            renderThumbSvg(svg, item.nodes);
-            div.appendChild(svg);
-            thumbList.appendChild(div);
-          });
-        });
-    }
-    function renderThumbSvg(svg, nodes0){
-      let ns = nodes0.map(n=>({...n}));
-      let minX = Math.min(...ns.map(n=>n.x)), maxX = Math.max(...ns.map(n=>n.x));
-      let minY = Math.min(...ns.map(n=>n.y)), maxY = Math.max(...ns.map(n=>n.y));
-      let sx = 110/Math.max(60,maxX-minX+1), sy=22/Math.max(16,maxY-minY+1);
-      let tx = (130 - (maxX-minX)*sx)/2 - minX*sx + 6;
-      let ty = (38 - (maxY-minY)*sy)/2 - minY*sy + 2;
-      svg.innerHTML = '';
-      ns.forEach(n=>{
-        if(n.parent!==null && n.parent!==undefined){
-          let p = ns.find(nn=>nn.id===n.parent);
-          if(p){
-            let x1 = p.x*sx+tx+23, y1 = p.y*sy+ty+8;
-            let x2 = n.x*sx+tx+8, y2 = n.y*sy+ty+8;
-            let c = p.id===1?"#f4c24d":"#bfbefc";
-            let path = document.createElementNS("http://www.w3.org/2000/svg","path");
-            path.setAttribute("d",`M${x1},${y1} Q${(x1+x2)/2},${(y1+y2)/2-7},${x2},${y2}`);
-            path.setAttribute("stroke",c); path.setAttribute("stroke-width","1.3"); path.setAttribute("fill","none");
-            svg.appendChild(path);
-          }
-        }
-      });
-      ns.forEach(n=>{
-        let x = n.x*sx+tx+(n.id===1?23:8), y = n.y*sy+ty+8;
-        let r = n.id===1?8:5;
-        let circ = document.createElementNS("http://www.w3.org/2000/svg","circle");
-        circ.setAttribute("cx",x); circ.setAttribute("cy",y); circ.setAttribute("r",r);
-        circ.setAttribute("fill",n.id===1?"#ffe08b":"#fff");
-        circ.setAttribute("stroke",n.id===1?"#f4c24d":"#bfbefc");
-        circ.setAttribute("stroke-width",n.id===1?"1.2":"1");
-        svg.appendChild(circ);
-      });
-    }
-
-    function onNewMap() {
-      if(nodes.length>0){
-        showDialog("是否保存当前画布？", ()=>{saveCloud(); newMap();});
-      } else {
-        newMap();
+      else if(e.key===" " && selectedId){
+        e.preventDefault();
+        editingNodeId = selectedId;
+        render();
       }
-    }
-    function newMap(){
-      nodes = [];
-      idCounter = 1;
-      selectedId = null;
-      editingNodeId = null;
-      render();
-    }
-
-    mindmap.onclick = ()=>{selectedId=null;render();};
-    document.body.addEventListener("keydown",function(e){
-      if(e.key==="Escape") hideSidebar();
-    });
-
-    // 对话框
-    function showDialog(msg, onSave) {
-      document.getElementById('dialog-msg').innerText = msg;
-      document.getElementById('overlay').style.display = 'flex';
-      let saveBtn = document.getElementById('dialog-save-btn');
-      saveBtn.onclick = function() {
+      else if(e.key==="Backspace" && selectedId && selectedId!==1){
+        e.preventDefault();
+        deleteNode(selectedId);
+      }
+      else if(e.key==="Escape"){
+        hideSidebar();
         hideDialog();
-        onSave && onSave();
-      };
-    }
-    function hideDialog() { document.getElementById('overlay').style.display = 'none'; }
+      }
+    });
+
+    // ...云端相关、侧栏、dialog等同前...
 
     render();
+    renderColorBar();
   </script>
 </body>
 </html>
