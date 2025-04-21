@@ -287,11 +287,8 @@
      <h3>我的线上导图</h3>
       <div class="thumb-list" id="thumb-list"></div>
     </div>
-    <div id="overlay">
-      <div id="dialog">
-        <div id="dialog-msg"></div>
-    </div>
-  </div>
+    <div id="sidebar-mask"></div>
+    <!-- 对话框遮罩和内容 -->
   <div class="mindmap-fab-wrap">
     <button class="mindmap-fab-btn" onclick="zoomIn()" title="放大">
       <svg width="25" height="25" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#fff" stroke="#8066e1" stroke-width="1.4"/><rect x="9" y="5" width="2" height="10" rx="1" fill="#8066e1"/><rect x="5" y="9" width="10" height="2" rx="1" fill="#8066e1"/></svg>
@@ -898,7 +895,6 @@ auth.onAuthStateChanged(user => {
         svg.appendChild(circ);
       });
     }
-
     function onNewMap() {
       if(nodes.length>0){
         showDialog("是否保存当前画布？", ()=>{saveCloud(); newMap();});
@@ -920,18 +916,29 @@ auth.onAuthStateChanged(user => {
     });
 
     // 对话框
-    function showDialog(msg, onSave) {
-      document.getElementById('dialog-msg').innerText = msg;
-      document.getElementById('overlay').style.display = 'flex';
-      let saveBtn = document.getElementById('dialog-save-btn');
-      saveBtn.onclick = function() {
-        hideDialog();
-        onSave && onSave();
-      };
-    }
-    function hideDialog() { document.getElementById('overlay').style.display = 'none'; }
-
+function showDialog(msg, onSave) {
+  document.getElementById('dialog-msg').innerText = msg || '是否保存当前画布？';
+  document.getElementById('overlay').style.display = 'flex';
+  let saveBtn = document.getElementById('dialog-save-btn');
+  // 解绑旧的
+  saveBtn.onclick = null;
+  // 绑定新的
+  saveBtn.onclick = function() {
+    hideDialog();
+    if(typeof onSave === 'function') onSave();
+  };
+}
+function hideDialog() {
+  document.getElementById('overlay').style.display = 'none';
+}
     render();
   </script>
+<div id="overlay" style="display:none; position:fixed;z-index:9999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.15);align-items:center;justify-content:center;">
+  <div id="dialog" style="background:#fff;padding:28px 34px 20px 34px;border-radius:13px;min-width:230px;max-width:80vw;box-shadow:0 8px 40px #b3a5ff44;text-align:center;">
+    <div id="dialog-msg" style="font-size:17px;margin-bottom:20px;">是否保存当前画布？</div>
+    <button class="dialog-btn" id="dialog-save-btn" style="margin-right:12px;padding:6px 25px;">保存</button>
+    <button class="dialog-btn" onclick="hideDialog()" style="padding:6px 25px;">取消</button>
+  </div>
+</div>
 </body>
 </html>
