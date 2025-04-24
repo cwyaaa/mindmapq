@@ -481,6 +481,148 @@ body {
   pointer-events: none;
 }
 
+/* 在 .color-option 样式后添加 */
+.plant-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.node.folded-complete {
+  position: relative;
+}
+
+.node.folded-complete::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  bottom: -5px;
+  width: 16px;
+  height: 16px;
+  background: #8066e1;
+  border-radius: 50%;
+  font-size: 12px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.node.folded-complete::before {
+  content: "+";
+  position: absolute;
+  right: -8px;
+  bottom: -5px;
+  width: 16px;
+  height: 16px;
+  z-index: 10;
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 隐藏/显示快捷键提示栏 */
+.shortcutbar .toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.7);
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.2s;
+}
+
+.shortcutbar .toggle-btn:hover {
+  opacity: 1;
+  background: #fff;
+}
+
+.shortcutbar.collapsed {
+  max-width: 50px;
+  overflow: hidden;
+}
+
+.shortcutbar.collapsed::after {
+  content: "⌨️";
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+}
+
+/* 搜索结果增强样式 */
+.search-result-item {
+  transition: all 0.3s;
+  border-left: 4px solid transparent;
+}
+
+.search-result-item:hover {
+  border-left: 4px solid #8066e1;
+}
+
+.result-snippet {
+  color: #666;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-top: 5px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.result-meta {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+  font-size: 12px;
+  color: #888;
+}
+
+.result-meta span {
+  margin-right: 10px;
+}
+
+.plant-theme-green {
+  color: #2e7d32 !important;
+  border-color: #81c784 !important;
+}
+
+.plant-theme-autumn {
+  color: #e65100 !important;
+  border-color: #ffb74d !important;
+}
+
+.plant-theme-blossom {
+  color: #ad1457 !important;
+  border-color: #f48fb1 !important;
+}
+
+.plant-theme-jungle {
+  color: #1b5e20 !important;
+  border-color: #66bb6a !important;
+}
+
+.plant-theme-forest {
+  color: #1a237e !important;
+  border-color: #7986cb !important;
+}
+
 /* 节点样式 */
 .node {
   position: absolute; 
@@ -580,6 +722,9 @@ body {
 .node .icon-btn.add { 
   color: #8066e1;
 }
+.node .icon-btn.fold { 
+  color: #0288d1;
+}
 .line { 
   position: absolute; 
   z-index: 1; 
@@ -609,6 +754,15 @@ body {
 .node.highlight {
   box-shadow: 0 0 0 4px rgba(255, 224, 139, 0.5), 0 2px 9px rgba(199, 187, 250, 0.2);
   animation: pulse 1.5s infinite;
+}
+.node.folded::after {
+  content: "...";
+  position: absolute;
+  right: 10px;
+  bottom: -5px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #8066e1;
 }
 @keyframes pulse {
   0% { box-shadow: 0 0 0 4px rgba(255, 224, 139, 0.5), 0 2px 9px rgba(199, 187, 250, 0.2); }
@@ -725,7 +879,7 @@ body {
   position: fixed; 
   top: 60px; 
   left: 20px;
-  width: 250px; 
+  width: 300px; 
   height: calc(100vh - 80px);
   background: #fff; 
   box-shadow: 2px 0 16px rgba(183, 174, 250, 0.2); 
@@ -775,6 +929,11 @@ body {
   text-align: center; 
   width: 100%; 
   word-break: break-all;
+}
+.thumb-date {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 6px;
 }
 .thumb-svg {
   background: #fff; 
@@ -1001,6 +1160,44 @@ body {
   background: #fef5f5;
 }
 
+/* 撤销重做按钮 */
+.history-buttons {
+  position: absolute;
+  top: 76px;
+  right: 24px;
+  display: flex;
+  gap: 10px;
+  z-index: 100;
+}
+
+.history-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  color: #8066e1;
+  border: 2px solid #ece6fd;
+  box-shadow: 0 2px 10px rgba(199, 187, 250, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.history-btn:hover {
+  background: #ede7fb;
+  transform: scale(1.05);
+}
+
+.history-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  background: #f5f5f5;
+}
+
 /* 响应式设计 */
 @media (max-width: 1024px) {
   .app-container {
@@ -1154,6 +1351,12 @@ body {
     <div id="mindmap"></div>
   </div>
   
+  <!-- 撤销重做按钮 -->
+  <div class="history-buttons">
+    <button class="history-btn" id="undo-btn" title="撤销" disabled>↩</button>
+    <button class="history-btn" id="redo-btn" title="重做" disabled>↪</button>
+  </div>
+  
   <!-- 浮动按钮 -->
   <div class="mindmap-fab-wrap">
     <button class="mindmap-fab-btn" onclick="zoomIn()" title="放大">
@@ -1173,6 +1376,7 @@ body {
   <!-- 快捷键提示 -->
   <div class="shortcutbar" id="shortcutbar">
     <!-- 快捷键将动态生成 -->
+    <button class="toggle-btn" id="toggle-shortcuts" title="隐藏/显示快捷键提示">−</button>
   </div>
 </section>
 
@@ -1238,11 +1442,26 @@ const DEFAULT_SHORTCUTS = {
   editNode: { key: 'Space', description: '编辑节点' },
   deleteNode: { key: 'Backspace', description: '删除节点' },
   saveMap: { key: 'ctrl+s', description: '保存导图' },
-  closeDialog: { key: 'Escape', description: '关闭侧栏/对话框' }
+  closeDialog: { key: 'Escape', description: '关闭侧栏/对话框' },
+  undo: { key: 'ctrl+z', description: '撤销' },
+  redo: { key: 'ctrl+y', description: '重做' },
+  foldNode: { key: 'ctrl+f', description: '折叠/展开节点' }
 };
 
 // 当前快捷键配置
 let currentShortcuts = JSON.parse(localStorage.getItem('mindmapShortcuts')) || JSON.parse(JSON.stringify(DEFAULT_SHORTCUTS));
+
+// 植物主题配置
+const PLANT_THEMES = [
+  { name: '春芽绿', class: 'plant-theme-green', icon: '🌱', color: 1 },
+  { name: '秋叶橙', class: 'plant-theme-autumn', icon: '🍂', color: 0 },
+  { name: '花瓣粉', class: 'plant-theme-blossom', icon: '🌸', color: 4 },
+  { name: '雨林蓝', class: 'plant-theme-forest', icon: '🌿', color: 7 },
+  { name: '丛林绿', class: 'plant-theme-jungle', icon: '🌴', color: 6 }
+];
+
+// 当前主题
+let currentTheme = PLANT_THEMES[0];
 
 // 显示快捷键设置对话框
 function showShortcutSettings() {
@@ -1377,6 +1596,52 @@ function updateShortcutBar() {
   const clickSpan = document.createElement('span');
   clickSpan.innerHTML = '<kbd>点击节点</kbd> 选中节点';
   shortcutbar.appendChild(clickSpan);
+
+  // 添加植物主题图标
+  shortcutbar.innerHTML += `<span><kbd>${currentTheme.icon}</kbd> ${currentTheme.name}主题</span>`;
+  
+  // 添加切换按钮
+  const toggleBtn = document.createElement('button');
+  toggleBtn.id = 'toggle-shortcuts';
+  toggleBtn.className = 'toggle-btn';
+  toggleBtn.textContent = '−';
+  toggleBtn.title = '隐藏/显示快捷键提示';
+  shortcutbar.appendChild(toggleBtn);
+  
+  // 绑定切换按钮事件
+  toggleBtn.addEventListener('click', toggleShortcutBar);
+}
+
+// 切换快捷键栏显示/隐藏
+function toggleShortcutBar() {
+  const shortcutbar = document.getElementById('shortcutbar');
+  shortcutbar.classList.toggle('collapsed');
+  
+  // 更新按钮文本
+  const toggleBtn = document.getElementById('toggle-shortcuts');
+  if (shortcutbar.classList.contains('collapsed')) {
+    toggleBtn.textContent = '+';
+    toggleBtn.title = '显示快捷键提示';
+    localStorage.setItem('shortcutbarCollapsed', 'true');
+  } else {
+    toggleBtn.textContent = '−';
+    toggleBtn.title = '隐藏快捷键提示';
+    localStorage.setItem('shortcutbarCollapsed', 'false');
+  }
+}
+
+// 从本地存储加载快捷键栏状态
+function loadShortcutbarState() {
+  const isCollapsed = localStorage.getItem('shortcutbarCollapsed') === 'true';
+  if (isCollapsed) {
+    const shortcutbar = document.getElementById('shortcutbar');
+    shortcutbar.classList.add('collapsed');
+    const toggleBtn = document.getElementById('toggle-shortcuts');
+    if (toggleBtn) {
+      toggleBtn.textContent = '+';
+      toggleBtn.title = '显示快捷键提示';
+    }
+  }
 }
 
 // ==== 搜索引擎功能 ====
@@ -1484,34 +1749,42 @@ function generateMockResults(query) {
     let result = {
       title: '',
       url: '',
-      description: ''
+      description: '',
+      snippet: '',
+      date: new Date().toISOString().split('T')[0],
+      type: ['网页', '文章', '博客', '新闻', '学术'][Math.floor(Math.random() * 5)]
     };
     
     switch (currentEngine) {
       case 'google':
         result.title = `Google 搜索结果 #${i}: ${query}`;
-        result.url = `https://example.com/google-result-${i}`;
+        result.url = `https://example.com/google-result-${i}?q=${encodeURIComponent(query)}`;
         result.description = `这是关于"${query}"的Google搜索结果示例。这是第${i}个结果，包含了相关信息和描述。`;
+        result.snippet = `...找到了很多关于"${query}"的信息。这些信息可能对您有所帮助。您可以点击进入页面查看更多内容...`;
         break;
       case 'baidu':
         result.title = `百度搜索结果 #${i}: ${query}`;
-        result.url = `https://example.com/baidu-result-${i}`;
+        result.url = `https://example.com/baidu-result-${i}?wd=${encodeURIComponent(query)}`;
         result.description = `这是关于"${query}"的百度搜索结果示例。这是第${i}个结果，包含了相关信息和描述。`;
+        result.snippet = `...百度为您找到相关结果约100,000个。"${query}"有很多相关信息，这可能是您感兴趣的内容...`;
         break;
       case 'bing':
         result.title = `Bing 搜索结果 #${i}: ${query}`;
-        result.url = `https://example.com/bing-result-${i}`;
+        result.url = `https://example.com/bing-result-${i}?q=${encodeURIComponent(query)}`;
         result.description = `这是关于"${query}"的Bing搜索结果示例。这是第${i}个结果，包含了相关信息和描述。`;
+        result.snippet = `...微软Bing为您提供"${query}"的实用信息和链接。这些内容经过精心筛选，希望能满足您的需求...`;
         break;
       case 'duckduckgo':
         result.title = `DuckDuckGo 搜索结果 #${i}: ${query}`;
-        result.url = `https://example.com/duckduckgo-result-${i}`;
+        result.url = `https://example.com/duckduckgo-result-${i}?q=${encodeURIComponent(query)}`;
         result.description = `这是关于"${query}"的DuckDuckGo搜索结果示例。这是第${i}个结果，包含了相关信息和描述。`;
+        result.snippet = `...DuckDuckGo尊重您的隐私，为您找到了关于"${query}"的匿名结果。点击查看更多内容...`;
         break;
       default:
         result.title = `搜索结果 #${i}: ${query}`;
-        result.url = `https://example.com/result-${i}`;
+        result.url = `https://example.com/result-${i}?q=${encodeURIComponent(query)}`;
         result.description = `这是关于"${query}"的搜索结果示例。这是第${i}个结果，包含了相关信息和描述。`;
+        result.snippet = `...这是一个通用的搜索结果片段，包含了一些关于"${query}"的信息和上下文...`;
     }
     
     currentSearchResults.push(result);
@@ -1561,9 +1834,22 @@ function renderSearchResultsPage() {
       resultDescription.className = 'result-description';
       resultDescription.textContent = result.description;
       
+      const resultSnippet = document.createElement('div');
+      resultSnippet.className = 'result-snippet';
+      resultSnippet.textContent = result.snippet;
+      
+      const resultMeta = document.createElement('div');
+      resultMeta.className = 'result-meta';
+      resultMeta.innerHTML = `
+        <span>📅 ${result.date}</span>
+        <span>📄 ${result.type}</span>
+      `;
+      
       resultItem.appendChild(resultTitle);
       resultItem.appendChild(resultUrl);
       resultItem.appendChild(resultDescription);
+      resultItem.appendChild(resultSnippet);
+      resultItem.appendChild(resultMeta);
       
       // 点击结果项在新标签页打开
       resultItem.addEventListener('click', () => {
@@ -1615,7 +1901,7 @@ function updatePaginationButtons() {
   nextPageBtn.classList.toggle('disabled', currentPage === totalPages);
 }
 
-// ���一页
+// 上一页
 prevPageBtn.addEventListener('click', () => {
   if (currentPage > 1) {
     currentPage--;
@@ -1783,43 +2069,255 @@ let highlightedNodeId = null;
 // pinnedNodes: { [nodeId]: {x, y, colorIdx} }
 let pinnedNodes = {};
 
+// =============== 折叠功能相关 ==================
+// foldedNodes: { [nodeId]: true }
+let foldedNodes = {};
+
+// =============== 撤销重做功能相关 ==================
+const MAX_HISTORY = 50;
+let history = [];
+let historyIndex = -1;
+let isPerformingUndoRedo = false;
+
+// =============== 多主题节点相关 ==================
+// 用于存储根节点ID列表
+let rootNodes = [];
+
+// 添加历史记录
+function addHistory() {
+  if (isPerformingUndoRedo) return;
+  
+  // 如果当前不是最新状态，删除后面的历史
+  if (historyIndex < history.length - 1) {
+    history = history.slice(0, historyIndex + 1);
+  }
+  
+  // 保存当前状态
+  const state = {
+    nodes: JSON.parse(JSON.stringify(nodes)),
+    pinnedNodes: JSON.parse(JSON.stringify(pinnedNodes)),
+    foldedNodes: JSON.parse(JSON.stringify(foldedNodes)),
+    selectedId: selectedId,
+    idCounter: idCounter,
+    rootNodes: JSON.parse(JSON.stringify(rootNodes))
+  };
+  
+  history.push(state);
+  
+  // 限制历史记录数量
+  if (history.length > MAX_HISTORY) {
+    history.shift();
+  }
+  
+  historyIndex = history.length - 1;
+  
+  // 更新撤销重做按钮状态
+  updateHistoryButtons();
+}
+
+// 更新撤销重做按钮状态
+function updateHistoryButtons() {
+  const undoBtn = document.getElementById('undo-btn');
+  const redoBtn = document.getElementById('redo-btn');
+  
+  undoBtn.disabled = historyIndex < 0;
+  redoBtn.disabled = historyIndex >= history.length - 1;
+}
+
+// 撤销
+function undo() {
+  if (historyIndex < 0) return;
+  
+  isPerformingUndoRedo = true;
+  
+  // 加载上一个状态
+  const state = history[historyIndex];
+  nodes = JSON.parse(JSON.stringify(state.nodes));
+  pinnedNodes = JSON.parse(JSON.stringify(state.pinnedNodes));
+  foldedNodes = JSON.parse(JSON.stringify(state.foldedNodes));
+  selectedId = state.selectedId;
+  idCounter = state.idCounter;
+  rootNodes = state.rootNodes ? JSON.parse(JSON.stringify(state.rootNodes)) : [];
+  
+  historyIndex--;
+  
+  // 更新UI
+  render();
+  
+  isPerformingUndoRedo = false;
+  
+  // 更新撤销重做按钮状态
+  updateHistoryButtons();
+}
+
+// 重做
+function redo() {
+  if (historyIndex >= history.length - 1) return;
+  
+  isPerformingUndoRedo = true;
+  
+  // 加载下一个状态
+  historyIndex++;
+  const state = history[historyIndex];
+  nodes = JSON.parse(JSON.stringify(state.nodes));
+  pinnedNodes = JSON.parse(JSON.stringify(state.pinnedNodes));
+  foldedNodes = JSON.parse(JSON.stringify(state.foldedNodes));
+  selectedId = state.selectedId;
+  idCounter = state.idCounter;
+  rootNodes = state.rootNodes ? JSON.parse(JSON.stringify(state.rootNodes)) : [];
+  
+  // 更新UI
+  render();
+  
+  isPerformingUndoRedo = false;
+  
+  // 更新撤销重做按钮状态
+  updateHistoryButtons();
+}
+
+// 绑定撤销重做按钮
+document.getElementById('undo-btn').addEventListener('click', undo);
+document.getElementById('redo-btn').addEventListener('click', redo);
+
+// 获取节点所属的根节点
+function getRootNodeId(nodeId) {
+  let node = nodes.find(n => n.id === nodeId);
+  if (!node) return null;
+  
+  // 如果是根节点，直接返回
+  if (node.parent === null) return node.id;
+  
+  // 否则递归查找父节点
+  return getRootNodeId(node.parent);
+}
+
+// 自适应排序和避免节点重叠
+function findOptimalPosition(parentId) {
+  const parent = nodes.find(n => n.id === parentId);
+  if (!parent) return { x: 0, y: 0 };
+  
+  // 获取父节点的所有子节点
+  const siblings = nodes.filter(n => n.parent === parentId && !foldedNodes[n.id]);
+  
+  // 如果没有兄弟节点，放在父节点右侧
+  if (siblings.length === 0) {
+    return { x: parent.x + 180, y: parent.y };
+  }
+  
+  // 计算节点的大致尺寸
+  const nodeWidth = 120;
+  const nodeHeight = 40;
+  const nodeMargin = 20;
+  
+  // 尝试找到空白区域
+  const startX = parent.x + 180;
+  let startY = parent.y - (siblings.length * (nodeHeight + nodeMargin)) / 2;
+  
+  // 检查每个可能的位置
+  for (let i = 0; i < siblings.length + 1; i++) {
+    const testY = startY + i * (nodeHeight + nodeMargin);
+    let isOverlapping = false;
+    
+    // 检查这个位置是否与任何现有节点重叠
+    for (const node of nodes) {
+      if (
+        Math.abs(node.x - startX) < nodeWidth &&
+        Math.abs(node.y - testY) < nodeHeight
+      ) {
+        isOverlapping = true;
+        break;
+      }
+    }
+    
+    // 如果没有重叠，使用这个位置
+    if (!isOverlapping) {
+      return { x: startX, y: testY };
+    }
+  }
+  
+  // 如果所有位置都有重叠，尝试在最后一个兄弟节点下方放置
+  const lastSibling = siblings[siblings.length - 1];
+  return { x: startX, y: lastSibling.y + nodeHeight + nodeMargin };
+}
+
+// 折叠/展开节点
+function toggleFoldNode(nodeId) {
+  if (foldedNodes[nodeId]) {
+    // 展开节点
+    delete foldedNodes[nodeId];
+  } else {
+    // 折叠节点
+    foldedNodes[nodeId] = true;
+  }
+  
+  // 添加历史记录
+  addHistory();
+  
+  // 重新渲染
+  render();
+}
+
 // 横向排布并避免重叠的布局逻辑, pinned节点固定
 function layoutHorizontal() {
   if (!nodes.length) return;
+  
+  // 为每个根节点分配一个区域
+  rootNodes.forEach((rootId, index) => {
+    const root = nodes.find(n => n.id === rootId);
+    if (!root) return;
+    
+    // 如果是固定节点，不改变位置
+    if (pinnedNodes[rootId]) {
+      root.x = pinnedNodes[rootId].x;
+      root.y = pinnedNodes[rootId].y;
+    } else {
+      // 根据索引分配位置，确保根节点之间有足够的间距
+      root.x = 300 + index * 500;
+      root.y = 220;
+    }
+    
+    // 布局该根节点的子树
+    layoutSubtree(root);
+  });
+}
+
+// 布局子树
+function layoutSubtree(parent) {
   const gapX = 160, gapY = 80;
-  let root = nodes.find(n => n.id === 1);
-  if (!root) return;
-  root.x = 520; root.y = 220;
-  function layoutChildren(parent, depth, baseY) {
-    let children = nodes.filter(n => n.parent === parent.id);
-    // 置顶节点排在最前
-    children.sort((a, b) => {
-      const aPinned = !!pinnedNodes[a.id];
-      const bPinned = !!pinnedNodes[b.id];
-      if(aPinned && !bPinned) return -1;
-      if(!aPinned && bPinned) return 1;
-      return a.id - b.id;
-    });
-    let startX = parent.x + gapX;
-    let y = baseY, maxY = baseY;
-    children.forEach((child, idx) => {
-      if (pinnedNodes[child.id]) {
-        // 固定不动
-        child.x = pinnedNodes[child.id].x;
-        child.y = pinnedNodes[child.id].y;
-        child.colorIdx = pinnedNodes[child.id].colorIdx;
-      } else {
-        child.x = startX;
-        child.y = y;
-      }
-      // 避免重叠（后代排布递归）
-      y += gapY;
-      maxY = Math.max(maxY, child.y);
-      layoutChildren(child, depth + 1, child.y - Math.floor(gapY * (nodes.filter(n => n.parent === child.id).length-1) / 2));
-    });
-    return maxY;
-  }
-  layoutChildren(root, 1, root.y - (nodes.filter(n => n.parent === 1).length-1)/2*gapY);
+  
+  // 如果节点被折叠，不显示其子节点
+  if (foldedNodes[parent.id]) return;
+  
+  let children = nodes.filter(n => n.parent === parent.id);
+  // 置顶节点排在最前
+  children.sort((a, b) => {
+    const aPinned = !!pinnedNodes[a.id];
+    const bPinned = !!pinnedNodes[b.id];
+    if(aPinned && !bPinned) return -1;
+    if(!aPinned && bPinned) return 1;
+    return a.id - b.id;
+  });
+  
+  let startX = parent.x + gapX;
+  let y = parent.y - Math.floor(gapY * (children.length - 1) / 2);
+  
+  children.forEach((child) => {
+    if (pinnedNodes[child.id]) {
+      // 固定不动
+      child.x = pinnedNodes[child.id].x;
+      child.y = pinnedNodes[child.id].y;
+      child.colorIdx = pinnedNodes[child.id].colorIdx;
+    } else {
+      child.x = startX;
+      child.y = y;
+    }
+    
+    // 递归处理子节点
+    layoutSubtree(child);
+    
+    // 下一个子节点的位置
+    y += gapY;
+  });
 }
 
 // 颜色同步带置顶保护
@@ -1871,11 +2369,29 @@ function renderColorBar() {
         colorIdx: selectedNode.colorIdx
       };
     }
+    
+    // 添加历史记录
+    addHistory();
+    
     layoutHorizontal();
     render();
     renderColorBar();
   };
   colorBar.appendChild(pinBtn);
+  
+  // 折叠按钮
+  if (nodes.some(n => n.parent === selectedId)) {
+    let foldBtn = document.createElement('button');
+    foldBtn.className = 'color-bar-top-btn' + (foldedNodes[selectedId] ? ' pinned' : '');
+    foldBtn.innerHTML = foldedNodes[selectedId]
+      ? '<svg width="17" height="17" fill="none" viewBox="0 0 17 17"><path d="M3 8.5h11M8.5 3v11" stroke="#8066e1" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      : '<svg width="17" height="17" fill="none" viewBox="0 0 17 17"><path d="M3 8.5h11" stroke="#0288d1" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    foldBtn.title = foldedNodes[selectedId] ? '展开子节点' : '折叠子节点';
+    foldBtn.onclick = function() {
+      toggleFoldNode(selectedId);
+    };
+    colorBar.appendChild(foldBtn);
+  }
 
   // 颜色选项
   COLOR_LIST.forEach((c, i) => {
@@ -1890,6 +2406,10 @@ function renderColorBar() {
         // 若被置顶保护，不可切换颜色
         if(pinnedNodes[selectedId]) return;
         setColorCascade(selectedNode.id, i);
+        
+        // 添加历史记录
+        addHistory();
+        
         layoutHorizontal();
         render();
         renderColorBar();
@@ -1910,126 +2430,165 @@ const imgUpload = document.getElementById('img-upload');
 function render() {
   layoutHorizontal();
   mindmap.innerHTML = '';
-  btnAddRoot.style.display = nodes.length ? 'none' : '';
+  
+  // 显示添加根节点按钮
+  btnAddRoot.style.display = '';
+  btnAddRoot.textContent = nodes.length ? '+ 添加新主题' : '+ 添加中心主题';
+  
   // 连线
-  nodes.forEach(n=>{
-    if(n.parent!==null && n.parent!==undefined){
-      let p = nodes.find(nn=>nn.id===n.parent);
-      if(p) {
+  nodes.forEach(n => {
+    if (n.parent !== null && n.parent !== undefined) {
+      let p = nodes.find(nn => nn.id === n.parent);
+      // 只有当父节点没有被折叠时才绘制连线
+      if (p && !foldedNodes[p.id]) {
         let lineColor = COLOR_LIST[p.colorIdx !== undefined ? p.colorIdx : (p.id === 1 ? 1 : 0)].line;
         drawLine(p, n, lineColor);
       }
     }
   });
+  
   // 节点
-  nodes.forEach(n=>{
+  nodes.forEach(n => {
+    // 如果父节点被折叠，不显示此节点
+    const parent = n.parent !== null && n.parent !== undefined ? nodes.find(p => p.id === n.parent) : null;
+    if (parent && foldedNodes[parent.id]) return;
+    
     let div = document.createElement('div');
-    div.className = 'node' + (selectedId===n.id?' selected':'') + (n.id===1?' root':'') + (highlightedNodeId===n.id?' highlight':'');
-    div.style.left = (n.x+offsetX)+'px';
-    div.style.top = (n.y+offsetY)+'px';
+    div.className = 'node' + 
+               (selectedId === n.id ? ' selected' : '') + 
+               (n.parent === null ? ' root' : '') + 
+               (highlightedNodeId === n.id ? ' highlight' : '') +
+               (foldedNodes[n.id] && nodes.some(child => child.parent === n.id) ? ' folded-complete' : '');
+    div.style.left = (n.x + offsetX) + 'px';
+    div.style.top = (n.y + offsetY) + 'px';
     div.style.position = "absolute";
     div.style.fontSize = "15px";
     div.style.whiteSpace = "nowrap";
     div.style.flexDirection = "row";
     div.dataset.id = n.id;
+    
     // 颜色
-    let colorIdx = n.colorIdx !== undefined ? n.colorIdx : (n.id===1?1:0);
+    let colorIdx = n.colorIdx !== undefined ? n.colorIdx : (n.parent === null ? 1 : 0);
     let cset = COLOR_LIST[colorIdx] || COLOR_LIST[0];
     div.style.background = cset.bg;
     div.style.color = cset.color;
-    if(n.id===1) {
-      div.style.background = COLOR_LIST[colorIdx || 1].bg;
-      div.style.color = COLOR_LIST[colorIdx || 1].color;
-    }
+    div.style.borderColor = cset.line;
+    
     // 选中
-    if(selectedId === n.id) {
+    if (selectedId === n.id) {
       let outline = document.createElement('div');
       outline.className = "select-outline";
       div.appendChild(outline);
       div.style.zIndex = 11;
     }
+    
     // 编辑框
-    if(editingNodeId === n.id) {
+    if (editingNodeId === n.id) {
       let input = document.createElement('input');
       input.value = n.text;
       input.onblur = function() { finishEdit(n, input.value); };
       input.onkeydown = function(e) {
-        if(e.key === "Enter") input.blur();
-        else if(e.key === "Escape") { editingNodeId = null; render(); }
+        if (e.key === "Enter") input.blur();
+        else if (e.key === "Escape") { editingNodeId = null; render(); }
       };
-      setTimeout(()=>{ input.focus(); input.select(); }, 0);
+      setTimeout(() => { input.focus(); input.select(); }, 0);
       div.appendChild(input);
     } else {
       let txtspan = document.createElement('span');
       txtspan.textContent = n.text;
       div.appendChild(txtspan);
     }
-    if(n.img){
+    
+    if (n.img) {
       let imgEl = document.createElement('img');
       imgEl.src = n.img;
       imgEl.className = 'node-img';
       div.appendChild(imgEl);
     }
+    
     let icons = document.createElement('div');
     icons.className = 'node-icons';
+    
     let btnAdd = document.createElement('button');
     btnAdd.className = 'icon-btn add';
     btnAdd.title = "增加节点";
     btnAdd.innerHTML = '<svg width="16" height="16" fill="currentColor"><circle cx="8" cy="8" r="7" stroke="#8066e1" stroke-width="1.5" fill="none"/><rect x="7" y="3.5" width="2" height="9" rx="1"/><rect x="3.5" y="7" width="9" height="2" rx="1"/></svg>';
-    btnAdd.onclick = function(e){
+    btnAdd.onclick = function(e) {
       e.stopPropagation();
       addNode(n.id);
     };
     icons.appendChild(btnAdd);
-    if(n.id!==1) {
+    
+    if (n.parent !== null) {
       let btnDel = document.createElement('button');
       btnDel.className = 'icon-btn del';
       btnDel.title = "删除节点";
       btnDel.innerHTML = '<svg width="16" height="16" fill="currentColor"><circle cx="8" cy="8" r="7" stroke="#b71c1c" stroke-width="1.5" fill="none"/><line x1="5" y1="5" x2="11" y2="11" stroke="#b71c1c" stroke-width="2"/><line x1="11" y1="5" x2="5" y2="11" stroke="#b71c1c" stroke-width="2"/></svg>';
-      btnDel.onclick = function(e){
+      btnDel.onclick = function(e) {
         e.stopPropagation();
         deleteNode(n.id);
       };
       icons.appendChild(btnDel);
     }
+    
     let btnImg = document.createElement('button');
     btnImg.className = 'icon-btn img';
     btnImg.title = "上传图片";
     btnImg.innerHTML = '<svg width="16" height="16" fill="currentColor"><circle cx="8" cy="8" r="7" stroke="#f4b400" stroke-width="1.5" fill="none"/><rect x="4" y="10" width="8" height="2" rx="1" fill="#f4b400"/><circle cx="8" cy="7" r="2" fill="#f4b400"/></svg>';
-    btnImg.onclick = function(e){
+    btnImg.onclick = function(e) {
       e.stopPropagation();
       uploadImgForNode(n.id);
     };
     icons.appendChild(btnImg);
+    
     let btnEdit = document.createElement('button');
     btnEdit.className = 'icon-btn edit';
     btnEdit.title = "文本编辑";
     btnEdit.innerHTML = '<svg width="16" height="16" fill="currentColor"><circle cx="8" cy="8" r="7" stroke="#388e3c" stroke-width="1.5" fill="none"/><rect x="5" y="5" width="6" height="6" rx="1.2" stroke="#388e3c" stroke-width="1.2" fill="none"/><rect x="7" y="7" width="2" height="2" rx="0.5" fill="#388e3c"/></svg>';
-    btnEdit.onclick = function(e){
+    btnEdit.onclick = function(e) {
       e.stopPropagation();
       editingNodeId = n.id;
       render();
     };
     icons.appendChild(btnEdit);
+    
+    // 如果有子节点，添加折叠按钮
+    if (nodes.some(child => child.parent === n.id)) {
+      let btnFold = document.createElement('button');
+      btnFold.className = 'icon-btn fold';
+      btnFold.title = foldedNodes[n.id] ? "展开子节点" : "折叠子节点";
+      btnFold.innerHTML = foldedNodes[n.id] 
+        ? '<svg width="16" height="16" fill="currentColor"><circle cx="8" cy="8" r="7" stroke="#0288d1" stroke-width="1.5" fill="none"/><rect x="5" y="7" width="6" height="2" rx="1" fill="#0288d1"/><rect x="7" y="5" width="2" height="6" rx="1" fill="#0288d1"/></svg>'
+        : '<svg width="16" height="16" fill="currentColor"><circle cx="8" cy="8" r="7" stroke="#0288d1" stroke-width="1.5" fill="none"/><rect x="5" y="7" width="6" height="2" rx="1" fill="#0288d1"/></svg>';
+      btnFold.onclick = function(e) {
+        e.stopPropagation();
+        toggleFoldNode(n.id);
+      };
+      icons.appendChild(btnFold);
+    }
+    
     div.appendChild(icons);
-    div.onclick = function(e){
+    
+    div.onclick = function(e) {
       e.stopPropagation();
       selectedId = n.id;
       render();
       renderColorBar();
     };
-    div.ondblclick = function(e){
+    
+    div.ondblclick = function(e) {
       editingNodeId = n.id;
       render();
     };
-    div.onmousedown = function(e){
-      if(e.target.classList.contains('icon-btn')) return;
+    
+    div.onmousedown = function(e) {
+      if (e.target.classList.contains('icon-btn')) return;
       e.stopPropagation();
       let startX = e.clientX, startY = e.clientY;
       let oriX = n.x, oriY = n.y;
-      function move(ev){
-        n.x = oriX + (ev.clientX - startX)/scale;
-        n.y = oriY + (ev.clientY - startY)/scale;
+      function move(ev) {
+        n.x = oriX + (ev.clientX - startX) / scale;
+        n.y = oriY + (ev.clientY - startY) / scale;
         // 若为置顶，更新pinned坐标
         if (pinnedNodes[n.id]) {
           pinnedNodes[n.id].x = n.x;
@@ -2037,13 +2596,17 @@ function render() {
         }
         render();
       }
-      function up(){
+      function up() {
         document.removeEventListener('mousemove', move);
         document.removeEventListener('mouseup', up);
+        
+        // 添加历史记录
+        addHistory();
       }
       document.addEventListener('mousemove', move);
       document.addEventListener('mouseup', up);
     };
+    
     mindmap.appendChild(div);
   });
   
@@ -2058,11 +2621,19 @@ function render() {
 }
 
 function finishEdit(n, val) {
+  const oldText = n.text;
   n.text = val.trim() || "未命名";
-  editingNodeId = null; render();
+  editingNodeId = null;
+  
+  // 如果文本有变化，添加历史记录
+  if (oldText !== n.text) {
+    addHistory();
+  }
+  
+  render();
 }
 
-function drawLine(from, to, color="#bfbefc"){
+function drawLine(from, to, color="#bfbefc") {
   let x1 = from.x + 65 + offsetX, y1 = from.y + 17 + offsetY;
   let x2 = to.x + 15 + offsetX, y2 = to.y + 17 + offsetY;
   let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -2077,73 +2648,128 @@ function drawLine(from, to, color="#bfbefc"){
 }
 
 function addRoot() {
-  if(nodes.length>0) { alert("只能有一个中心主题"); return; }
-  nodes.push({id:1, text:"中心主题", x:520, y:220, parent:null, img:"", colorIdx:1});
-  idCounter=2; selectedId=1; editingNodeId=1;
+  // 随机选择一个主题
+  currentTheme = PLANT_THEMES[Math.floor(Math.random() * PLANT_THEMES.length)];
+  
+  // 创建新的根节点ID
+  const newRootId = idCounter++;
+  
+  // 添加到根节点列表
+  rootNodes.push(newRootId);
+  
+  // 创建根节点
+  nodes.push({
+    id: newRootId, 
+    text: "新主题", 
+    x: 300 + (rootNodes.length - 1) * 500, 
+    y: 220, 
+    parent: null, 
+    img: "", 
+    colorIdx: currentTheme.color
+  });
+  
+  selectedId = newRootId;
+  editingNodeId = newRootId;
+  
+  // 添加历史记录
+  addHistory();
+  
   layoutHorizontal();
   render();
 }
 
-function addNode(parentId){
+function addNode(parentId) {
   let p = nodes.find(n=>n.id===parentId);
-  let children = nodes.filter(n=>n.parent===parentId);
+  if (!p) return;
+  
+  // 找到最佳位置
+  const position = findOptimalPosition(parentId);
+  
   let newId = idCounter++;
   nodes.push({
-    id:newId,
-    text:"新节点",
-    x:p.x + 180,
-    y:p.y + children.length * 80,
-    parent:parentId,
-    img:"",
-    colorIdx:p.colorIdx !== undefined ? p.colorIdx : (p.id===1?1:0)
+    id: newId,
+    text: "新节点",
+    x: position.x,
+    y: position.y,
+    parent: parentId,
+    img: "",
+    colorIdx: p.colorIdx !== undefined ? p.colorIdx : 0
   });
-  selectedId=newId; editingNodeId=newId;
+  
+  selectedId = newId;
+  editingNodeId = newId;
+  
+  // 如果父节点被折叠，展开它
+  if (foldedNodes[parentId]) {
+    delete foldedNodes[parentId];
+  }
+  
+  // 添加历史记录
+  addHistory();
+  
   layoutHorizontal();
   render();
 }
 
 function deleteNode(nodeId) {
+  // 如果是根节点，从根节点列表中移除
+  if (rootNodes.includes(nodeId)) {
+    rootNodes = rootNodes.filter(id => id !== nodeId);
+  }
+  
   delRec(nodeId);
   delete pinnedNodes[nodeId];
-  selectedId = nodes[0]?.id || null;
+  selectedId = nodes.length > 0 ? nodes[0].id : null;
+  
+  // 添加历史记录
+  addHistory();
+  
   layoutHorizontal();
   render();
 }
-function delRec(id){
+
+function delRec(id) {
   nodes.filter(n=>n.parent===id).forEach(n=>delRec(n.id));
   nodes = nodes.filter(n=>n.id!==id);
   delete pinnedNodes[id];
+  delete foldedNodes[id];
 }
 
-function uploadImgForNode(nodeId){
+function uploadImgForNode(nodeId) {
   imgUpload.value = '';
-  imgUpload.onchange = function(){
+  imgUpload.onchange = function() {
     const file = imgUpload.files[0];
     if(!file) return;
     const reader = new FileReader();
-    reader.onload = function(){
+    reader.onload = function() {
       let n = nodes.find(n=>n.id===nodeId);
-      n.img = reader.result;
-      render();
+      if (n) {
+        n.img = reader.result;
+        
+        // 添加历史记录
+        addHistory();
+        
+        render();
+      }
     };
     reader.readAsDataURL(file);
   };
   imgUpload.click();
 }
 
-function zoomIn(){ scale = Math.min(scale * 1.15, 4); render();}
-function zoomOut(){ scale = Math.max(scale / 1.15, 0.25); render();}
-function zoomReset(){ scale = 1; offsetX = 0; offsetY = 0; render(); }
+function zoomIn() { scale = Math.min(scale * 1.15, 4); render(); }
+function zoomOut() { scale = Math.max(scale / 1.15, 0.25); render(); }
+function zoomReset() { scale = 1; offsetX = 0; offsetY = 0; render(); }
 
-document.addEventListener("wheel",function(e){
-  if(e.target.closest('.mindmap-section') && e.ctrlKey){
+document.addEventListener("wheel", function(e) {
+  if(e.target.closest('.mindmap-section') && e.ctrlKey) {
     e.preventDefault();
     if(e.deltaY < 0) zoomIn();
     else if(e.deltaY > 0) zoomOut();
   }
 }, {passive:false});
 
-mindmap.addEventListener('mousedown', function(e){
+mindmap.addEventListener('mousedown', function(e) {
   if(e.target !== mindmap) return;
   draggingCanvas = true;
   mindmap.classList.add('dragging');
@@ -2151,12 +2777,12 @@ mindmap.addEventListener('mousedown', function(e){
   dragStartY = e.clientY;
   dragOriX = offsetX;
   dragOriY = offsetY;
-  function move(ev){
+  function move(ev) {
     offsetX = dragOriX + (ev.clientX-dragStartX)/scale;
     offsetY = dragOriY + (ev.clientY-dragStartY)/scale;
     render();
   }
-  function up(){
+  function up() {
     draggingCanvas = false;
     mindmap.classList.remove('dragging');
     document.removeEventListener('mousemove', move);
@@ -2209,7 +2835,7 @@ document.addEventListener("keydown", function(e) {
   }
   
   // 删除节点快捷键
-  if (matchShortcut(currentShortcuts.deleteNode.key) && selectedId !== null && selectedId !== 1) {
+  if (matchShortcut(currentShortcuts.deleteNode.key) && selectedId !== null && !rootNodes.includes(selectedId)) {
     e.preventDefault();
     deleteNode(selectedId);
     return;
@@ -2236,19 +2862,78 @@ document.addEventListener("keydown", function(e) {
     hideShortcutSettings();
     return;
   }
+  
+  // 撤销快捷键
+  if (matchShortcut(currentShortcuts.undo.key)) {
+    e.preventDefault();
+    undo();
+    return;
+  }
+  
+  // 重做快捷键
+  if (matchShortcut(currentShortcuts.redo.key)) {
+    e.preventDefault();
+    redo();
+    return;
+  }
+  
+  // 折叠/展开节点快捷键
+  if (matchShortcut(currentShortcuts.foldNode.key) && selectedId !== null) {
+    e.preventDefault();
+    // 只有当节点有子节点时才能折叠
+    if (nodes.some(n => n.parent === selectedId)) {
+      toggleFoldNode(selectedId);
+    }
+    return;
+  }
 });
 
-function saveCloud(){
+function saveCloud() {
   if (!auth.currentUser) return alert('请先登录再保存到云端');
   if(!nodes.length) return alert("当前画布为空。");
-  let title = nodes.find(n=>n.id===1)?.text || "思维导图";
+  
+  // 使用第一个根节点的文本作为标题
+  let title = nodes.find(n => rootNodes.includes(n.id))?.text || "思维导图";
   const uid = auth.currentUser.uid;
+  
+  // 检查是否有相同标题的导图
+  db.collection('mindmaps')
+    .where('uid', '==', uid)
+    .where('title', '==', title)
+    .get()
+    .then(snapshot => {
+      if (!snapshot.empty) {
+        // 有相同标题的导图，询问是否覆盖
+        showDialog(`已存在标题为"${title}"的导图，是否覆盖？`, () => {
+          // 用户确认覆盖，删除旧的导图
+          const docId = snapshot.docs[0].id;
+          db.collection('mindmaps').doc(docId).delete().then(() => {
+            // 删除成功后保存新的导图
+            saveNewMap(uid, title);
+          });
+        });
+      } else {
+        // 没有相同标题的导图，直接保存
+        saveNewMap(uid, title);
+      }
+    })
+    .catch(e => alert('检查导图失败: ' + e.message));
+}
+
+function saveNewMap(uid, title) {
+  // 获取当前日期时间
+  const now = new Date();
+  const dateStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+  
   db.collection('mindmaps')
     .add({
       uid: uid,
       title: title,
       nodes: JSON.parse(JSON.stringify(nodes)),
-      pinnedNodes: JSON.parse(JSON.stringify(pinnedNodes)), // 保存置顶节点信息
+      pinnedNodes: JSON.parse(JSON.stringify(pinnedNodes)),
+      foldedNodes: JSON.parse(JSON.stringify(foldedNodes)),
+      rootNodes: JSON.parse(JSON.stringify(rootNodes)),
+      saveDate: dateStr,
       time: firebase.firestore.FieldValue.serverTimestamp()
     })
     .then(() => {
@@ -2262,56 +2947,83 @@ function loadSidebarIfVisible() {
   if(sidebar.style.display==='flex') renderSidebar();
 }
 
-function showSidebar(){
+function showSidebar() {
   renderSidebar();
   document.getElementById('sidebar').style.display="flex";
   document.getElementById('sidebar-mask').style.display="block";
   document.body.style.overflow="hidden";
 }
-function hideSidebar(){
+
+function hideSidebar() {
   document.getElementById('sidebar').style.display="none";
   document.getElementById('sidebar-mask').style.display="none";
   document.body.style.overflow="";
 }
+
 document.getElementById('sidebar-mask').onclick = hideSidebar;
-document.getElementById('sidebar').onclick = function(e){
+document.getElementById('sidebar').onclick = function(e) {
   if(e.target===this) hideSidebar();
 }
-function renderSidebar(){
+
+function renderSidebar() {
   if(!auth.currentUser) {
     thumbList.innerHTML = `<div style="color:#bbb;font-size:12px;margin:18px 0;text-align:center;">请先登录</div>`;
     return;
   }
+  
   const uid = auth.currentUser.uid;
   db.collection('mindmaps')
     .where('uid', '==', uid)
     .orderBy('time', 'desc')
     .limit(30)
     .get()
-    .then(snapshot=>{
+    .then(snapshot => {
       thumbList.innerHTML = '';
       if(snapshot.empty) {
         thumbList.innerHTML = `<div style="color:#bbb;font-size:12px;margin:18px 0;text-align:center;">暂无线上导图</div>`;
         return;
       }
-      snapshot.forEach(doc=>{
+      
+      snapshot.forEach(doc => {
         const item = doc.data();
         let div = document.createElement('div');
         div.className = 'thumb-item';
-        div.onclick = function(){
+        div.onclick = function() {
           nodes = JSON.parse(JSON.stringify(item.nodes));
           // 加载置顶节点信息
           pinnedNodes = item.pinnedNodes ? JSON.parse(JSON.stringify(item.pinnedNodes)) : {};
-          idCounter = Math.max(...nodes.map(n=>n.id))+1;
+          // 加载折叠节点信息
+          foldedNodes = item.foldedNodes ? JSON.parse(JSON.stringify(item.foldedNodes)) : {};
+          // 加载根节点列表
+          rootNodes = item.rootNodes ? JSON.parse(JSON.stringify(item.rootNodes)) : 
+                     [nodes.find(n => n.parent === null)?.id].filter(Boolean);
+          
+          idCounter = Math.max(...nodes.map(n=>n.id)) + 1;
           selectedId = nodes[0]?.id || null;
           editingNodeId = null;
+          
+          // 清空历史记录并添加当前状态
+          history = [];
+          historyIndex = -1;
+          addHistory();
+          
           hideSidebar();
           render();
         };
+        
         let title = document.createElement('div');
         title.className = 'thumb-title';
         title.textContent = item.title;
         div.appendChild(title);
+        
+        // 添加保存日期
+        if (item.saveDate) {
+          let date = document.createElement('div');
+          date.className = 'thumb-date';
+          date.textContent = item.saveDate;
+          div.appendChild(date);
+        }
+        
         let svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
         svg.setAttribute("class","thumb-svg");
         svg.setAttribute("width","130"); svg.setAttribute("height","38");
@@ -2321,7 +3033,8 @@ function renderSidebar(){
       });
     });
 }
-function renderThumbSvg(svg, nodes0){
+
+function renderThumbSvg(svg, nodes0) {
   let ns = nodes0.map(n=>({...n}));
   let minX = Math.min(...ns.map(n=>n.x)), maxX = Math.max(...ns.map(n=>n.x));
   let minY = Math.min(...ns.map(n=>n.y)), maxY = Math.max(...ns.map(n=>n.y));
@@ -2354,6 +3067,7 @@ function renderThumbSvg(svg, nodes0){
     svg.appendChild(circ);
   });
 }
+
 function onNewMap() {
   if(nodes.length>0){
     showDialog("是否保存当前画布？", ()=>{saveCloud(); newMap();});
@@ -2361,12 +3075,20 @@ function onNewMap() {
     newMap();
   }
 }
-function newMap(){
+
+function newMap() {
   nodes = [];
   idCounter = 1;
   selectedId = null;
   editingNodeId = null;
   pinnedNodes = {};
+  foldedNodes = {};
+  
+  // 清空历史记录
+  history = [];
+  historyIndex = -1;
+  updateHistoryButtons();
+  
   render();
 }
 
@@ -2388,6 +3110,7 @@ function showDialog(msg, onSave) {
     if(typeof onSave === 'function') onSave();
   };
 }
+
 function hideDialog() {
   document.getElementById('overlay').style.display = 'none';
 }
@@ -2456,6 +3179,7 @@ function saveCurrentState() {
   const state = {
     nodes: JSON.parse(JSON.stringify(nodes)),
     pinnedNodes: JSON.parse(JSON.stringify(pinnedNodes)),
+    foldedNodes: JSON.parse(JSON.stringify(foldedNodes)),
     idCounter: idCounter,
     selectedId: selectedId,
     scale: scale,
@@ -2474,11 +3198,18 @@ function loadLastState() {
       const state = JSON.parse(savedState);
       nodes = state.nodes;
       pinnedNodes = state.pinnedNodes || {};
+      foldedNodes = state.foldedNodes || {};
       idCounter = state.idCounter;
       selectedId = state.selectedId;
       scale = state.scale || 1;
       offsetX = state.offsetX || 0;
       offsetY = state.offsetY || 0;
+      
+      // 初始化历史记录
+      history = [];
+      historyIndex = -1;
+      addHistory();
+      
       render();
       return true;
     } catch (e) {
@@ -2506,6 +3237,9 @@ if (!loadLastState()) {
 }
 renderSearchHistory();
 applyLayout();
+
+// 加载快捷键栏状态
+loadShortcutbarState();
 </script>
 </body>
 </html>
