@@ -551,25 +551,25 @@ body {
   background: #fff;
 }
 
- /* 折叠样式 */
+/* 折叠样式 */
     .shortcutbar.collapsed {
       min-width: 44px;
       max-width: 44px;
       padding: 7px 7px;
       overflow: hidden;
       justify-content: center;
-    }
-    .shortcutbar.collapsed span,
-    .shortcutbar.collapsed kbd {
-      display: none;
-    }
-    .shortcutbar.collapsed .toggle-btn:after {
-      content: "🎉";
+}
+.shortcutbar.collapsed > span,
+.shortcutbar.collapsed > kbd {
+  display: none !important;
+}
+.shortcutbar.collapsed .toggle-btn:after {
+      content: "⯇";
       display: inline;
       font-size: 16px;
       margin-left: 0;
-    }
-    .toggle-btn:after {
+}
+.toggle-btn:after {
       content: "";
     }
 
@@ -780,34 +780,34 @@ body {
 
 /* 快捷键栏 */
 .shortcutbar {
-      position: absolute;
-      left: 50%;
-      bottom: 18px;
-      transform: translateX(-50%);
-      background: #fff;
-      color: #333;
-      font-size: 13px;
-      border-radius: 9px;
-      box-shadow: 0 1px 10px rgba(199, 187, 250, 0.3);
-      padding: 7px 20px;
-      opacity: .98;
-      display: flex;
-      gap: 14px;
-      z-index: 101;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .shortcutbar kbd {
-      background: #8066e1;
-      color: #fff;
-      border-radius: 3px;
-      padding: 2px 7px;
-      margin-right: 3px;
-      font-family: monospace;
-      font-size: 13px;
-      font-weight: 500;
-      box-shadow: 0 1px 2px rgba(189, 177, 246, 0.13);
-    }
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  background: #fff;
+  color: #333;
+  font-size: 13px;
+  border-radius: 9px;
+  box-shadow: 0 1px 10px rgba(199, 187, 250, 0.3);
+  padding: 7px 20px;
+  opacity: .98;
+  display: flex;
+  gap: 14px;
+  z-index: 101;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.shortcutbar kbd {
+  background: #8066e1;
+  color: #fff;
+  border-radius: 3px;
+  padding: 2px 7px;
+  margin-right: 3px;
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(189, 177, 246, 0.13);
+}
 
 /* 浮动按钮 */
 .mindmap-fab-wrap {
@@ -1382,7 +1382,7 @@ body {
   </div>
   
   <!-- 快捷键提示 -->
- <div class="shortcutbar" id="shortcutbar">
+  <div class="shortcutbar" id="shortcutbar">
     <span>快捷键：<kbd>H</kbd> 显示/隐藏本栏</span>
     <span><kbd>Enter</kbd> 添加子节点</span>
     <span><kbd>Alt</kbd>+<kbd>Alt</kbd> 编辑节点</span>
@@ -1395,7 +1395,8 @@ body {
     <span>双击节点：编辑节点</span>
     <span>点击节点：选中节点</span>
     <span>🌱 春芽绿主题</span>
-   <button class="toggle-btn" id="toggleShortcuts" title="折叠/展开快捷键栏" style="background:none;border:none;font-size:16px;cursor:pointer;">⯈</button>
+    <button id="toggleShortcuts" title="隐藏快捷键提示">⯈</button>
+  </div>
   </div>
 </section>
 
@@ -1621,9 +1622,9 @@ function updateShortcutBar() {
   
   // 添加切换按钮
   const toggleBtn = document.createElement('button');
-  toggleBtn.id = 'toggleShortcuts';
+  toggleBtn.id = 'toggle-shortcuts';
   toggleBtn.className = 'toggle-btn';
-  toggleBtn.textContent = '⯈';
+  toggleBtn.textContent = '⯇';
   toggleBtn.title = '隐藏/显示快捷键提示';
   shortcutbar.appendChild(toggleBtn);
   
@@ -1637,19 +1638,31 @@ function toggleShortcutBar() {
   shortcutbar.classList.toggle('collapsed');
   
   // 更新按钮文本
-  const toggleBtn = document.getElementById('toggleShortcuts');
+  const toggleBtn = document.getElementById('toggle-shortcuts');
   if (shortcutbar.classList.contains('collapsed')) {
     toggleBtn.textContent = '';
     toggleBtn.title = '显示快捷键提示';
     localStorage.setItem('shortcutbarCollapsed', 'true');
   } else {
-    toggleBtn.textContent = '⯈';
+    toggleBtn.textContent = '⯇';
     toggleBtn.title = '隐藏快捷键提示';
     localStorage.setItem('shortcutbarCollapsed', 'false');
   }
 }
 
 // 从本地存储加载快捷键栏状态
+function loadShortcutbarState() {
+  const isCollapsed = localStorage.getItem('shortcutbarCollapsed') === 'true';
+  if (isCollapsed) {
+    const shortcutbar = document.getElementById('shortcutbar');
+    shortcutbar.classList.add('collapsed');
+    const toggleBtn = document.getElementById('toggle-shortcuts');
+    if (toggleBtn) {
+      toggleBtn.textContent = '🎆';
+      toggleBtn.title = '显示快捷键提示';
+    }
+  }
+}
 
 // ==== 搜索引擎功能 ====
 const searchInput = document.getElementById('search-input');
@@ -2248,14 +2261,19 @@ function findOptimalPosition(parentId) {
 }
 
 // 折叠/展开节点
-function toggleFoldNode(nodeId) {
-  if (foldedNodes[nodeId]) {
-    // 展开节点
-    delete foldedNodes[nodeId];
-  } else {
-    // 折叠节点
+function setFoldRecursively(nodeId, fold) {
+  if (fold) {
     foldedNodes[nodeId] = true;
+  } else {
+    delete foldedNodes[nodeId];
   }
+  // 递归处理所有子节点
+  nodes.filter(n => n.parent === nodeId).forEach(child => setFoldRecursively(child.id, fold));
+}
+
+function toggleFoldNode(nodeId) {
+  const shouldFold = !foldedNodes[nodeId];
+  setFoldRecursively(nodeId, shouldFold);
   
   // 添加历史记录
   addHistory();
