@@ -551,19 +551,27 @@ body {
   background: #fff;
 }
 
-.shortcutbar.collapsed {
-  max-width: 50px;
-  overflow: hidden;
-}
-
-.shortcutbar.collapsed::after {
-  content: "⌨️";
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 16px;
-}
+ /* 折叠样式 */
+    .shortcutbar.collapsed {
+      min-width: 44px;
+      max-width: 44px;
+      padding: 7px 7px;
+      overflow: hidden;
+      justify-content: center;
+    }
+    .shortcutbar.collapsed span,
+    .shortcutbar.collapsed kbd {
+      display: none;
+    }
+    .shortcutbar.collapsed .toggle-btn:after {
+      content: "🎉";
+      display: inline;
+      font-size: 16px;
+      margin-left: 0;
+    }
+    .toggle-btn:after {
+      content: "";
+    }
 
 /* 搜索结果增强样式 */
 .search-result-item {
@@ -772,34 +780,34 @@ body {
 
 /* 快捷键栏 */
 .shortcutbar {
-  position: absolute;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  background: #fff;
-  color: #333;
-  font-size: 13px;
-  border-radius: 9px;
-  box-shadow: 0 1px 10px rgba(199, 187, 250, 0.3);
-  padding: 7px 20px;
-  opacity: .98;
-  display: flex;
-  gap: 14px;
-  z-index: 101;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.shortcutbar kbd {
-  background: #8066e1;
-  color: #fff;
-  border-radius: 3px;
-  padding: 2px 7px;
-  margin-right: 3px;
-  font-family: monospace;
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: 0 1px 2px rgba(189, 177, 246, 0.13);
-}
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: #fff;
+      color: #333;
+      font-size: 13px;
+      border-radius: 9px;
+      box-shadow: 0 1px 10px rgba(199, 187, 250, 0.3);
+      padding: 7px 20px;
+      opacity: .98;
+      display: flex;
+      gap: 14px;
+      z-index: 101;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .shortcutbar kbd {
+      background: #8066e1;
+      color: #fff;
+      border-radius: 3px;
+      padding: 2px 7px;
+      margin-right: 3px;
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 1px 2px rgba(189, 177, 246, 0.13);
+    }
 
 /* 浮动按钮 */
 .mindmap-fab-wrap {
@@ -1374,9 +1382,20 @@ body {
   </div>
   
   <!-- 快捷键提示 -->
-  <div class="shortcutbar" id="shortcutbar">
-    <!-- 快捷键将动态生成 -->
-    <button class="toggle-btn" id="toggle-shortcuts" title="隐藏/显示快捷键提示">−</button>
+ <div class="shortcutbar" id="shortcutbar">
+    <span>快捷键：<kbd>H</kbd> 显示/隐藏本栏</span>
+    <span><kbd>Enter</kbd> 添加子节点</span>
+    <span><kbd>Alt</kbd>+<kbd>Alt</kbd> 编辑节点</span>
+    <span><kbd>Backspace</kbd> 删除节点</span>
+    <span><kbd>Ctrl</kbd>+<kbd>S</kbd> 保存导图</span>
+    <span><kbd>Escape</kbd> 关闭侧栏/对话框</span>
+    <span><kbd>Ctrl</kbd>+<kbd>Z</kbd> 撤销</span>
+    <span><kbd>Ctrl</kbd>+<kbd>Y</kbd> 重做</span>
+    <span><kbd>Ctrl</kbd>+<kbd>F</kbd> 折叠/展开节点</span>
+    <span>双击节点：编辑节点</span>
+    <span>点击节点：选中节点</span>
+    <span>🌱 春芽绿主题</span>
+   <button class="toggle-btn" id="toggleShortcuts" title="折叠/展开快捷键栏" style="background:none;border:none;font-size:16px;cursor:pointer;">⯈</button>
   </div>
 </section>
 
@@ -1574,7 +1593,7 @@ function hideShortcutSettings() {
 // 更新快捷键提示栏
 function updateShortcutBar() {
   const shortcutbar = document.getElementById('shortcutbar');
-  shortcutbar.innerHTML = '<b>节点快捷键：</b>';
+  shortcutbar.innerHTML = '<b>🎉</b>';
   
   Object.entries(currentShortcuts).forEach(([action, config]) => {
     const shortcutSpan = document.createElement('span');
@@ -1602,9 +1621,9 @@ function updateShortcutBar() {
   
   // 添加切换按钮
   const toggleBtn = document.createElement('button');
-  toggleBtn.id = 'toggle-shortcuts';
+  toggleBtn.id = 'toggleShortcuts';
   toggleBtn.className = 'toggle-btn';
-  toggleBtn.textContent = '−';
+  toggleBtn.textContent = '⯈';
   toggleBtn.title = '隐藏/显示快捷键提示';
   shortcutbar.appendChild(toggleBtn);
   
@@ -1618,31 +1637,19 @@ function toggleShortcutBar() {
   shortcutbar.classList.toggle('collapsed');
   
   // 更新按钮文本
-  const toggleBtn = document.getElementById('toggle-shortcuts');
+  const toggleBtn = document.getElementById('toggleShortcuts');
   if (shortcutbar.classList.contains('collapsed')) {
-    toggleBtn.textContent = '+';
+    toggleBtn.textContent = '';
     toggleBtn.title = '显示快捷键提示';
     localStorage.setItem('shortcutbarCollapsed', 'true');
   } else {
-    toggleBtn.textContent = '−';
+    toggleBtn.textContent = '⯈';
     toggleBtn.title = '隐藏快捷键提示';
     localStorage.setItem('shortcutbarCollapsed', 'false');
   }
 }
 
 // 从本地存储加载快捷键栏状态
-function loadShortcutbarState() {
-  const isCollapsed = localStorage.getItem('shortcutbarCollapsed') === 'true';
-  if (isCollapsed) {
-    const shortcutbar = document.getElementById('shortcutbar');
-    shortcutbar.classList.add('collapsed');
-    const toggleBtn = document.getElementById('toggle-shortcuts');
-    if (toggleBtn) {
-      toggleBtn.textContent = '+';
-      toggleBtn.title = '显示快捷键提示';
-    }
-  }
-}
 
 // ==== 搜索引擎功能 ====
 const searchInput = document.getElementById('search-input');
@@ -3048,7 +3055,7 @@ function renderThumbSvg(svg, nodes0) {
       if(p){
         let x1 = p.x*sx+tx+23, y1 = p.y*sy+ty+8;
         let x2 = n.x*sx+tx+8, y2 = n.y*sy+ty+8;
-        let c = p.id===1?"#f4c24d":"#bfbefc";
+        let c = p.parent===null?"#f4c24d":"#bfbefc";
         let path = document.createElementNS("http://www.w3.org/2000/svg","path");
         path.setAttribute("d",`M${x1},${y1} Q${(x1+x2)/2},${(y1+y2)/2-7},${x2},${y2}`);
         path.setAttribute("stroke",c); path.setAttribute("stroke-width","1.3"); path.setAttribute("fill","none");
@@ -3057,13 +3064,13 @@ function renderThumbSvg(svg, nodes0) {
     }
   });
   ns.forEach(n=>{
-    let x = n.x*sx+tx+(n.id===1?23:8), y = n.y*sy+ty+8;
-    let r = n.id===1?8:5;
+    let x = n.x*sx+tx+(n.parent===null?23:8), y = n.y*sy+ty+8;
+    let r = n.parent===null?8:5;
     let circ = document.createElementNS("http://www.w3.org/2000/svg","circle");
     circ.setAttribute("cx",x); circ.setAttribute("cy",y); circ.setAttribute("r",r);
-    circ.setAttribute("fill",n.id===1?"#ffe08b":"#fff");
-    circ.setAttribute("stroke",n.id===1?"#f4c24d":"#bfbefc");
-    circ.setAttribute("stroke-width",n.id===1?"1.2":"1");
+    circ.setAttribute("fill",n.parent===null?"#ffe08b":"#fff");
+    circ.setAttribute("stroke",n.parent===null?"#f4c24d":"#bfbefc");
+    circ.setAttribute("stroke-width",n.parent===null?"1.2":"1");
     svg.appendChild(circ);
   });
 }
@@ -3083,6 +3090,7 @@ function newMap() {
   editingNodeId = null;
   pinnedNodes = {};
   foldedNodes = {};
+  rootNodes = [];
   
   // 清空历史记录
   history = [];
@@ -3179,7 +3187,6 @@ function saveCurrentState() {
   const state = {
     nodes: JSON.parse(JSON.stringify(nodes)),
     pinnedNodes: JSON.parse(JSON.stringify(pinnedNodes)),
-    foldedNodes: JSON.parse(JSON.stringify(foldedNodes)),
     idCounter: idCounter,
     selectedId: selectedId,
     scale: scale,
@@ -3198,18 +3205,11 @@ function loadLastState() {
       const state = JSON.parse(savedState);
       nodes = state.nodes;
       pinnedNodes = state.pinnedNodes || {};
-      foldedNodes = state.foldedNodes || {};
       idCounter = state.idCounter;
       selectedId = state.selectedId;
       scale = state.scale || 1;
       offsetX = state.offsetX || 0;
       offsetY = state.offsetY || 0;
-      
-      // 初始化历史记录
-      history = [];
-      historyIndex = -1;
-      addHistory();
-      
       render();
       return true;
     } catch (e) {
@@ -3237,9 +3237,6 @@ if (!loadLastState()) {
 }
 renderSearchHistory();
 applyLayout();
-
-// 加载快捷键栏状态
-loadShortcutbarState();
 </script>
 </body>
 </html>
