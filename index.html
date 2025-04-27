@@ -2920,6 +2920,30 @@ function saveCloud() {
   // 使用第一个根节点的文本作为标题
   let title = nodes.find(n => rootNodes.includes(n.id))?.text || "思维导图";
   const uid = auth.currentUser.uid;
+  
+  // 检查是否有相同标题的导图
+  db.collection('mindmaps')
+    .where('uid', '==', uid)
+    .where('title', '==', title)
+    .get()
+    .then(snapshot => {
+      if (!snapshot.empty) {
+        // 有相同标题的导图，询问是否覆盖
+        showDialog(`已存在标题为"${title}"的导图，是否覆盖？`, () => {
+          // 用户确认覆盖，删除旧的导图
+          const docId = snapshot.docs[0].id;
+          db.collection('mindmaps').doc(docId).delete().then(() => {
+            // 删除成功后保存新的导图
+            saveNewMap(uid, title);
+          });
+        });
+      } else {
+        // 没有相同标题的导图，直接保存
+        saveNewMap(uid, title);
+      }
+    })
+    .catch(e => alert('检查导图失败: ' + e.message));
+}
 
 function saveNewMap(uid, title) {
   // 获取当前日期时间
