@@ -2917,28 +2917,10 @@ function saveCloud() {
   if (!auth.currentUser) return alert('请先登录再保存到云端');
   if(!nodes.length) return alert("当前画布为空。");
   
-// 这里动态取最新的根节点文本
-  const rootNode = nodes.find(n => rootNodes.includes(n.id));
-  const title = rootNode?.text || "思维导图";
-
-  const data = {
-    title: title,
-    nodes: nodes,
-    rootNodes: rootNodes,
-    idCounter: idCounter,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  };
+  // 使用第一个根节点的文本作为标题
+  let title = nodes.find(n => rootNodes.includes(n.id))?.text || "思维导图";
+  const uid = auth.currentUser.uid;
   
-  db.collection("mindmaps").doc(uid).collection("maps").add(data)
-    .then(() => {
-      alert("保存成功！");
-    })
-    .catch(e => {
-      console.error("保存失败", e);
-      alert("保存失败！");
-    });
-}
-
   // 检查是否有相同标题的导图
   db.collection('mindmaps')
     .where('uid', '==', uid)
