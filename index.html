@@ -2929,6 +2929,16 @@ function saveCloud() {
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
   
+  db.collection("mindmaps").doc(uid).collection("maps").add(data)
+    .then(() => {
+      alert("保存成功！");
+    })
+    .catch(e => {
+      console.error("保存失败", e);
+      alert("保存失败！");
+    });
+}
+
   // 检查是否有相同标题的导图
   db.collection('mindmaps')
     .where('uid', '==', uid)
